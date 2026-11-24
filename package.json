@@ -1,0 +1,17 @@
+{
+  "name": "bench",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "BENCH — Device Performance Benchmark",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vite": "^6.0.7"
+  }
+}
