@@ -159,21 +159,24 @@ wenn der Tab verdeckt ist.
 
 Unabhängig von den standardisierten Scores – frei wählbare Last, echte Berechnung im Browser:
 
-1. **Mandelbrot Explorer** – Zoom, Pan, Iterationszahl, vier Paletten, Renderauflösung; Anzeige von
-   Frame-Zeit, Zoomstufe und Pixeldurchsatz.
-2. **Volume Shader** – Echtzeit-Raymarching durch ein prozedurales Dichtefeld mit Gradienten-Beleuchtung;
-   Schrittzahl und Volumendichte regelbar.
+1. **Mandelbrot Explorer** – Deep-Zoom ohne UI-Anschlag: Die Iteration läuft im Shader in doppelter
+   Gleitkommapräzision (zwei float32 pro Zahl), der Zoommittelpunkt ebenso auf der CPU, und die
+   Iterationszahl wächst automatisch mit der Zoomstufe. Dazu 1–4 Samples pro Pixel, vier Paletten und
+   einstellbare Renderauflösung; Anzeige von Frame-Zeit, Zoomstufe und Pixeldurchsatz.
+2. **Volume Shader** – Echtzeit-Raymarching durch ein prozedurales Dichtefeld aus vier Rauschebenen mit
+   Gradienten-Beleuchtung; 24–384 Schritte, Volumendichte und Renderauflösung regelbar.
 3. **Particle Simulation** – bis zu 1 048 576 Partikel, wahlweise als GPGPU-Ping-Pong oder als
    JavaScript-Schleife auf der CPU; beide Pfade werden getrennt gemessen.
 4. **3D Rendering** – prozedurale Landschaft mit Shadow-Map, PCF-Schatten und Nebel; Detailgrad,
    Auflösung und Schatten zuschaltbar.
-5. **Mandelbulb Raymarcher** – Fraktal als Distanzfeld, bis zu 400 Raymarching-Schritte mit voller
-   Mandelbulb-Iteration, 1–4 Samples pro Pixel, Soft-Shadows und Ambient Occlusion. Bewusst so schwer,
-   dass Smartphones in den einstelligen FPS-Bereich fallen.
+5. **Mandelbulb Raymarcher** – Fraktal als Distanzfeld, 64–1024 Raymarching-Schritte mit voller
+   Mandelbulb-Iteration (bis 32 Iterationen), 1–4 Samples pro Pixel, 9-stufige Ambient Occlusion und
+   Soft-Shadows über 96 Schritte. Bewusst so schwer, dass Smartphones in den einstelligen FPS-Bereich
+   fallen – auf einem M1 ist selbst der Standard schon sichtbar zäh.
 6. **GPU Fluid** – Navier-Stokes auf der GPU: Advektion, Wirklichkeitskonfinement, Jacobi-Drucksolver
-   (4–64 Iterationen pro Bild) und Gradientenabzug im Ping-Pong; Simulationsraster 128²–512².
-7. **Path Tracer** – progressive Monte-Carlo-Pfadverfolgung mit Float-Akkumulation, 1–8 Bounces und
-   1–4 Samples pro Bild; stehende Kamera konvergiert, Bewegung startet die Akkumulation neu.
+   (4–192 Iterationen pro Bild) und Gradientenabzug im Ping-Pong; Simulationsraster 128²–2048².
+7. **Path Tracer** – progressive Monte-Carlo-Pfadverfolgung mit Float-Akkumulation, 1–16 Bounces und
+   1–16 Samples pro Bild; stehende Kamera konvergiert, Bewegung startet die Akkumulation neu.
 
 ---
 

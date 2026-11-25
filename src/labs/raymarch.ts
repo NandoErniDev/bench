@@ -26,7 +26,7 @@ float mandelbulb(vec3 p) {
   vec3 z = p;
   float dr = 1.0;
   float r = 0.0;
-  for (int i = 0; i < 24; i++) {
+  for (int i = 0; i < 48; i++) {
     if (i >= uIter) break;
     r = length(z);
     if (r > BAILOUT) break;
@@ -55,8 +55,8 @@ vec3 normalAt(vec3 p) {
 float occlusion(vec3 p, vec3 n) {
   float occ = 0.0;
   float w = 1.0;
-  for (int i = 1; i <= 5; i++) {
-    float h = 0.008 + 0.12 * float(i);
+  for (int i = 1; i <= 9; i++) {
+    float h = 0.008 + 0.09 * float(i);
     occ += (h - mandelbulb(p + n * h)) * w;
     w *= 0.72;
   }
@@ -66,7 +66,7 @@ float occlusion(vec3 p, vec3 n) {
 float softShadow(vec3 ro, vec3 rd) {
   float res = 1.0;
   float t = 0.012;
-  for (int i = 0; i < 48; i++) {
+  for (int i = 0; i < 96; i++) {
     float h = mandelbulb(ro + rd * t);
     res = min(res, 14.0 * h / t);
     t += clamp(h, 0.004, 0.16);
@@ -110,7 +110,7 @@ vec3 render(vec2 fragCoord) {
   float t = 0.75;
   float glow = 0.0;
   bool hit = false;
-  for (int i = 0; i < 512; i++) {
+  for (int i = 0; i < 1024; i++) {
     if (i >= uSteps) break;
     vec3 p = ro + rd * t;
     float d = mandelbulb(p);
@@ -164,7 +164,7 @@ export function mountRaymarch(host: HTMLElement, controls: HTMLElement): { destr
     'uCamTarget',
   ]);
 
-  const view = { yaw: 0.7, pitch: 0.32, distance: 3.0, steps: 200, iter: 9, power: 8, aa: 1 };
+  const view = { yaw: 0.7, pitch: 0.32, distance: 3.0, steps: 480, iter: 14, power: 8, aa: 2 };
 
   const camera = () => {
     const cp = Math.cos(view.pitch);
@@ -202,7 +202,7 @@ export function mountRaymarch(host: HTMLElement, controls: HTMLElement): { destr
     const [a, b] = Array.from(pointers.values());
     const distance = Math.hypot(a.x - b.x, a.y - b.y);
     if (pinch > 0) {
-      view.distance = Math.max(1.2, Math.min(7, view.distance * (pinch / Math.max(1, distance))));
+      view.distance = Math.max(1.02, Math.min(7, view.distance * (pinch / Math.max(1, distance))));
     }
     pinch = distance;
   };
@@ -214,7 +214,7 @@ export function mountRaymarch(host: HTMLElement, controls: HTMLElement): { destr
 
   const onWheel = (event: WheelEvent) => {
     event.preventDefault();
-    view.distance = Math.max(1.2, Math.min(7, view.distance * Math.exp(event.deltaY * 0.0012)));
+    view.distance = Math.max(1.02, Math.min(7, view.distance * Math.exp(event.deltaY * 0.0012)));
   };
 
   surface.canvas.addEventListener('pointerdown', onPointerDown);
@@ -225,9 +225,9 @@ export function mountRaymarch(host: HTMLElement, controls: HTMLElement): { destr
 
   const stepsControl = rangeControl({
     label: 'Raymarching-Schritte',
-    min: 48,
-    max: 400,
-    step: 8,
+    min: 64,
+    max: 1024,
+    step: 16,
     value: view.steps,
     format: (value) => String(value),
     onInput: (value) => {
@@ -238,7 +238,7 @@ export function mountRaymarch(host: HTMLElement, controls: HTMLElement): { destr
   const iterControl = rangeControl({
     label: 'Fraktal-Iterationen',
     min: 3,
-    max: 16,
+    max: 32,
     step: 1,
     value: view.iter,
     format: (value) => String(value),
@@ -264,7 +264,7 @@ export function mountRaymarch(host: HTMLElement, controls: HTMLElement): { destr
     min: 1,
     max: 4,
     step: 1,
-    value: 1,
+    value: 2,
     format: (value) => String(value),
     onInput: (value) => {
       view.aa = value;
@@ -274,7 +274,7 @@ export function mountRaymarch(host: HTMLElement, controls: HTMLElement): { destr
   const resolutionControl = rangeControl({
     label: 'Renderauflösung',
     min: 0.4,
-    max: 1.5,
+    max: 2,
     step: 0.05,
     value: 1,
     format: (value) => `${Math.round(value * 100)} %`,
@@ -314,7 +314,7 @@ export function mountRaymarch(host: HTMLElement, controls: HTMLElement): { destr
       el(
         'p',
         { class: 'footnote', style: 'line-height:1.6' },
-        'Ein Mandelbulb ist keine Fläche, sondern ein Distanzfeld: Jeder der bis zu 400 Schritte ruft eine komplette Fraktal-Iteration auf, '
+        'Ein Mandelbulb ist keine Fläche, sondern ein Distanzfeld: Jeder der bis zu 1024 Schritte ruft eine komplette Fraktal-Iteration auf, '
           + 'und Beleuchtung, Ambient Occlusion und Schatten lösen jeweils weitere Distanzabfragen aus. '
           + 'Auf einem Smartphone ist diese Last bewusst nicht mehr flüssig — genau das macht sie vergleichbar.',
       ),

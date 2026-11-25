@@ -80,7 +80,7 @@ vec3 trace(vec3 origin, vec3 direction) {
   vec3 ro = origin;
   vec3 rd = direction;
 
-  for (int depth = 0; depth < 8; depth++) {
+  for (int depth = 0; depth < 16; depth++) {
     if (depth >= uBounces) break;
 
     float closest = 1e30;
@@ -150,7 +150,7 @@ void main() {
   vec3 right = normalize(cross(vec3(0.0, 1.0, 0.0), forward));
   vec3 up = cross(forward, right);
 
-  for (int s = 0; s < 4; s++) {
+  for (int s = 0; s < 16; s++) {
     if (s >= uSamples) break;
     hashState = uint(gl_FragCoord.x) * 1973u + uint(gl_FragCoord.y) * 9277u + uint(uFrame) * 26699u + uint(s) * 7919u + 1u;
     vec2 jitter = vec2(rand(), rand());
@@ -259,7 +259,7 @@ export function mountPathtracer(host: HTMLElement, controls: HTMLElement): { des
   const displayProgram = compileProgram(gl, FS_TRIANGLE, DISPLAY, 'Path Tracer Anzeige');
   const displayUniforms = uniformMap(gl, displayProgram, ['uAccum', 'uRes', 'uExposure']);
 
-  const state = { yaw: 0.6, pitch: 0.22, distance: 6.2, bounces: 3, samples: 1, exposure: 1.15, rotating: true };
+  const state = { yaw: 0.6, pitch: 0.22, distance: 6.2, bounces: 6, samples: 4, exposure: 1.15, rotating: true };
   let reset = true;
   let frame = 0;
 
@@ -308,7 +308,7 @@ export function mountPathtracer(host: HTMLElement, controls: HTMLElement): { des
   const bounceControl = rangeControl({
     label: 'Bounces pro Strahl',
     min: 1,
-    max: 8,
+    max: 16,
     step: 1,
     value: state.bounces,
     format: (value) => String(value),
@@ -321,7 +321,7 @@ export function mountPathtracer(host: HTMLElement, controls: HTMLElement): { des
   const sampleControl = rangeControl({
     label: 'Samples pro Bild',
     min: 1,
-    max: 4,
+    max: 16,
     step: 1,
     value: state.samples,
     format: (value) => String(value),
@@ -346,7 +346,7 @@ export function mountPathtracer(host: HTMLElement, controls: HTMLElement): { des
   const resolutionControl = rangeControl({
     label: 'Renderauflösung',
     min: 0.35,
-    max: 1.5,
+    max: 2,
     step: 0.05,
     value: 1,
     format: (value) => `${Math.round(value * 100)} %`,

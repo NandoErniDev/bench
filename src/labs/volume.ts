@@ -21,13 +21,46 @@ vec3 rotateY(vec3 p, float a) {
   return vec3(c * p.x - s * p.z, p.y, s * p.x + c * p.z);
 }
 
+float hash(vec3 p) {
+  p = fract(p * 0.3183099 + vec3(0.1, 0.2, 0.3));
+  p *= 17.0;
+  return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
+}
+
+float noise(vec3 x) {
+  vec3 i = floor(x);
+  vec3 f = fract(x);
+  f = f * f * (3.0 - 2.0 * f);
+  float n000 = hash(i + vec3(0.0, 0.0, 0.0));
+  float n100 = hash(i + vec3(1.0, 0.0, 0.0));
+  float n010 = hash(i + vec3(0.0, 1.0, 0.0));
+  float n110 = hash(i + vec3(1.0, 1.0, 0.0));
+  float n001 = hash(i + vec3(0.0, 0.0, 1.0));
+  float n101 = hash(i + vec3(1.0, 0.0, 1.0));
+  float n011 = hash(i + vec3(0.0, 1.0, 1.0));
+  float n111 = hash(i + vec3(1.0, 1.0, 1.0));
+  return mix(
+    mix(mix(n000, n100, f.x), mix(n010, n110, f.x), f.y),
+    mix(mix(n001, n101, f.x), mix(n011, n111, f.x), f.y),
+    f.z
+  );
+}
+
+float fbm(vec3 p) {
+  float sum = 0.0;
+  float amplitude = 0.5;
+  for (int i = 0; i < 4; i++) {
+    sum += amplitude * noise(p);
+    p = p * 2.07 + vec3(1.7, 9.2, 3.1);
+    amplitude *= 0.5;
+  }
+  return sum;
+}
+
 float density(vec3 p) {
   vec3 q = rotateY(p, uTime * 0.18);
-  float d = sin(q.x * 3.1 + uTime * 0.7) * sin(q.y * 3.7 - uTime * 0.5) * sin(q.z * 3.3 + uTime * 0.4);
-  d += 0.55 * sin(q.x * 6.3 - uTime * 0.9) * sin(q.y * 7.1 + uTime * 0.8) * sin(q.z * 6.7 + uTime * 0.6);
-  d += 0.28 * sin(q.x * 12.7 + uTime * 1.3) * sin(q.y * 11.3 - uTime) * sin(q.z * 13.1);
   float r = length(q);
-  d = d * 0.55 + 0.42 - r * 0.6;
+  float d = fbm(q * 1.7 + vec3(0.0, uTime * 0.22, 0.0)) * 1.7 - 0.62 - r * 0.18;
   return clamp(d, 0.0, 1.0);
 }
 
@@ -41,7 +74,7 @@ void main() {
   vec3 col = vec3(0.0);
   float t = 0.2;
 
-  for (int i = 0; i < 192; i++) {
+  for (int i = 0; i < 384; i++) {
     if (i >= uSteps) break;
     vec3 p = ro + rd * t;
     float d = density(p) * uBass;
@@ -71,13 +104,13 @@ export function mountVolume(host: HTMLElement, controls: HTMLElement): { destroy
   const program = compileProgram(gl, FS_TRIANGLE, FRAG, 'Volume Shader');
   const uniforms = uniformMap(gl, program, ['uRes', 'uTime', 'uSteps', 'uBass']);
 
-  const state = { steps: 72, density: 1, animate: true };
+  const state = { steps: 128, density: 1, animate: true };
   let clock = 0;
 
   const quality = rangeControl({
     label: 'Raymarching-Schritte',
     min: 24,
-    max: 176,
+    max: 384,
     step: 8,
     value: state.steps,
     format: (value) => String(value),
@@ -89,7 +122,7 @@ export function mountVolume(host: HTMLElement, controls: HTMLElement): { destroy
   const resolution = rangeControl({
     label: 'Renderauflösung',
     min: 0.4,
-    max: 1.5,
+    max: 2,
     step: 0.05,
     value: 1,
     format: (value) => `${Math.round(value * 100)} %`,
@@ -130,7 +163,7 @@ export function mountVolume(host: HTMLElement, controls: HTMLElement): { destroy
       el(
         'p',
         { class: 'footnote', style: 'line-height:1.6' },
-        'Der Shader tastet pro Pixel ein prozedurales 3D-Volumen ab. Jeder Schritt kostet vier Dichtefunktionen (eine für die Dichte, drei für den Gradienten). '
+        'Der Shader tastet pro Pixel ein prozedurales 3D-Volumen ab: Jeder Schritt kostet vier Dichtefunktionen (eine für die Dichte, drei für den Gradienten), und jede davon summiert vier Oktaven Rauschen aus je acht Gitterwerten. '
           + 'Die HUD-Anzeige „Schritte/s" ist das Produkt aus Schrittzahl und Bildrate — ein direktes Maß für die geleistete Shader-Arbeit.',
       ),
     ),

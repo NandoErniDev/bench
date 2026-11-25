@@ -255,7 +255,8 @@ export function mountFluid(host: HTMLElement, controls: HTMLElement): { destroy:
     };
   };
 
-  const state = { simRes: 256, pressureIterations: 28, dyeDecay: 0.9, auto: true };
+  const state = { simRes: 512, pressureIterations: 64, dyeDecay: 0.9, auto: true };
+  const maxGrid = Math.min(2048, gl.getParameter(gl.MAX_TEXTURE_SIZE) as number);
 
   let velocity: PingPong;
   let dye: PingPong;
@@ -271,7 +272,7 @@ export function mountFluid(host: HTMLElement, controls: HTMLElement): { destroy:
       gl.deleteFramebuffer(target.framebuffer);
     }
     allocated = [];
-    dyeRes = Math.min(1024, state.simRes * 2);
+    dyeRes = Math.min(2048, state.simRes * 2);
     velocity = createPingPong(state.simRes, state.simRes, gl.LINEAR);
     dye = createPingPong(dyeRes, dyeRes, gl.LINEAR);
     pressure = createPingPong(state.simRes, state.simRes, gl.NEAREST);
@@ -370,10 +371,12 @@ export function mountFluid(host: HTMLElement, controls: HTMLElement): { destroy:
       { value: '256', label: '256 × 256' },
       { value: '384', label: '384 × 384' },
       { value: '512', label: '512 × 512' },
+      { value: '1024', label: '1024 × 1024' },
+      { value: '2048', label: '2048 × 2048' },
     ],
     value: String(state.simRes),
     onChange: (value) => {
-      state.simRes = Number(value);
+      state.simRes = Math.min(Number(value), maxGrid);
       allocate();
     },
   });
@@ -381,7 +384,7 @@ export function mountFluid(host: HTMLElement, controls: HTMLElement): { destroy:
   const iterationControl = rangeControl({
     label: 'Druck-Iterationen',
     min: 4,
-    max: 64,
+    max: 192,
     step: 2,
     value: state.pressureIterations,
     format: (value) => `${value} ×`,
@@ -425,7 +428,7 @@ export function mountFluid(host: HTMLElement, controls: HTMLElement): { destroy:
         'p',
         { class: 'footnote', style: 'line-height:1.6' },
         'Pro Frame laufen Advektion, Wirbelstärke, Divergenz, Abklingen, alle Druck-Iterationen und der Gradientenabzug über das komplette Raster — '
-          + 'jeder Durchlauf schreibt ein Float-Ziel. Bei 256² und 28 Iterationen sind das fast zwei Millionen Texel-Schreibvorgänge pro Bild, '
+          + 'jeder Durchlauf schreibt ein Float-Ziel. Bei 512² und 64 Iterationen sind das schon über 18 Millionen Texel-Schreibvorgänge pro Bild, '
           + 'bevor das erste Pixel auf dem Bildschirm erscheint.',
       ),
       el('p', { class: 'footnote', style: 'margin-top:8px' }, 'Ziehen: Farbe und Impuls einspritzen'),

@@ -131,13 +131,23 @@ export class LabSurface {
 
   resize(): void {
     const rect = this.host.getBoundingClientRect();
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const width = Math.max(2, Math.round(rect.width * dpr * this.scale));
-    const height = Math.max(2, Math.round(rect.height * dpr * this.scale));
-    if (this.canvas.width !== width || this.canvas.height !== height) {
-      this.canvas.width = width;
-      this.canvas.height = height;
-      this.gl.viewport(0, 0, width, height);
+    // Native pixel density (Retina/OLED phones included). The pixel budget is
+    // only a guard so the context cannot be lost; it is far above any laptop.
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    let width = Math.max(2, rect.width * dpr * this.scale);
+    let height = Math.max(2, rect.height * dpr * this.scale);
+    const budget = 16_000_000;
+    if (width * height > budget) {
+      const shrink = Math.sqrt(budget / (width * height));
+      width *= shrink;
+      height *= shrink;
+    }
+    const finalWidth = Math.max(2, Math.round(width));
+    const finalHeight = Math.max(2, Math.round(height));
+    if (this.canvas.width !== finalWidth || this.canvas.height !== finalHeight) {
+      this.canvas.width = finalWidth;
+      this.canvas.height = finalHeight;
+      this.gl.viewport(0, 0, finalWidth, finalHeight);
     }
   }
 

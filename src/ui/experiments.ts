@@ -23,9 +23,11 @@ const EXPERIMENTS: ExperimentDefinition[] = [
   {
     slug: 'mandelbrot',
     title: 'Mandelbrot Explorer',
-    description: 'Interaktives Zoomen durch die Mandelbrot-Menge, vollständig im Fragment-Shader berechnet.',
+    description: 'Deep-Zoom durch die Mandelbrot-Menge mit doppelter Gleitkommapräzision im Fragment-Shader.',
     long:
-      'Jedes Pixel führt die Iteration selbst aus. Iterationszahl, Farbpalette und Renderauflösung sind einstellbar; die Anzeige liefert Frame-Zeit und Pixeldurchsatz in Echtzeit.',
+      'Jedes Pixel iteriert in doppelter Gleitkommapräzision, damit die Struktur auch bei extremer Vergrößerung nicht in Pixelbrei zerfällt. '
+      + 'Die Iterationszahl wächst automatisch mit dem Zoom, Supersampling und Renderauflösung kommen obendrauf. '
+      + 'Kein Anschlag nach oben: Du kannst beliebig weit hineinzoomen.',
     tech: 'Fragment-Shader · Iteration',
     icon: ICONS.layers,
     mount: mountMandelbrot,
@@ -33,9 +35,10 @@ const EXPERIMENTS: ExperimentDefinition[] = [
   {
     slug: 'volume',
     title: 'Volume Shader',
-    description: 'Echtzeit-Raymarching durch ein prozedurales 3D-Volumen mit Gradienten-Beleuchtung.',
+    description: 'Echtzeit-Raymarching durch ein prozedurales 3D-Volumen — vier Oktaven Rauschen pro Dichtefunktion.',
     long:
-      'Der Shader tastet ein animiertes Dichtefeld ab und beleuchtet es über den Gradienten. Die Schrittzahl steuert Qualität und Rechenlast unmittelbar.',
+      'Der Shader tastet ein animiertes Dichtefeld aus vier Rauschebenen ab und beleuchtet es über den Gradienten. '
+      + 'Jeder Schritt kostet vier komplette Dichtefunktionen; die Schrittzahl steuert Qualität und Rechenlast unmittelbar.',
     tech: 'Raymarching · Beleuchtung',
     icon: ICONS.waves,
     mount: mountVolume,
@@ -63,7 +66,7 @@ const EXPERIMENTS: ExperimentDefinition[] = [
   {
     slug: 'raymarch',
     title: 'Mandelbulb Raymarcher',
-    description: 'Ein Fraktal als Distanzfeld: bis zu 400 Raymarching-Schritte, jeder mit voller Mandelbulb-Iteration.',
+    description: 'Ein Fraktal als Distanzfeld: bis zu 1024 Raymarching-Schritte, jeder mit voller Mandelbulb-Iteration.',
     long:
       'Der Shader sucht die Oberfläche eines Mandelbulbs über seine Distanzfunktion — ohne Mesh, ohne Dreiecke. '
       + 'Jeder Schritt ruft eine komplette Fraktal-Iteration auf, Beleuchtung, Ambient Occlusion und Schatten lösen weitere Abfragen aus. '
@@ -75,10 +78,10 @@ const EXPERIMENTS: ExperimentDefinition[] = [
   {
     slug: 'fluid',
     title: 'GPU Fluid',
-    description: 'Navier-Stokes in Echtzeit: Advektion, Wirbelstärke und bis zu 64 Druck-Iterationen pro Bild.',
+    description: 'Navier-Stokes in Echtzeit: Advektion, Wirbelstärke und bis zu 192 Druck-Iterationen pro Bild.',
     long:
       'Pro Frame laufen Advektion, Wirbelstärke, Divergenz, Abklingen, der Jacobi-Drucksolver und der Gradientenabzug über das komplette Raster. '
-      + 'Jeder Durchlauf schreibt ein Float-Ziel; bei 256² und 20 Iterationen sind das über zwei Millionen Texel pro Bild.',
+      + 'Jeder Durchlauf schreibt ein Float-Ziel; bei 512² und 64 Iterationen sind das über 18 Millionen Texel pro Bild, bei 2048² entsprechend mehr.',
     tech: 'GPGPU · Fluiddynamik',
     icon: ICONS.waves,
     mount: mountFluid,
@@ -86,7 +89,7 @@ const EXPERIMENTS: ExperimentDefinition[] = [
   {
     slug: 'pathtracer',
     title: 'Path Tracer',
-    description: 'Progressive Monte-Carlo-Pfadverfolgung mit Float-Akkumulation — Rauschen sinkt mit jedem Sample.',
+    description: 'Progressive Monte-Carlo-Pfadverfolgung mit bis zu 16 Bounces und 16 Samples pro Bild.',
     long:
       'Jedes Sample verfolgt einen Strahl über mehrere diffuse Reflexionen und addiert das Ergebnis in einen Fließkommapuffer. '
       + 'Stillstehende Kamera konvergiert zu einem sauberen Bild, jede Bewegung startet die Akkumulation neu. '
