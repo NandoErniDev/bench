@@ -6,6 +6,8 @@ import { mountTerrain } from '../labs/terrain';
 import { mountRaymarch } from '../labs/raymarch';
 import { mountFluid } from '../labs/fluid';
 import { mountPathtracer } from '../labs/pathtracer';
+import { mountReaction } from '../labs/reaction';
+import { mountAttractor } from '../labs/attractor';
 import { note, tag } from './components';
 import type { View } from './types';
 
@@ -23,12 +25,13 @@ const EXPERIMENTS: ExperimentDefinition[] = [
   {
     slug: 'mandelbrot',
     title: 'Mandelbrot Explorer',
-    description: 'Deep-Zoom durch die Mandelbrot-Menge mit doppelter Gleitkommapräzision im Fragment-Shader.',
+    description: 'Deep-Zoom durch die Mandelbrot-Menge — jenseits von 800-fach rechnet der Shader in exaktem 64-Bit-Festkomma.',
     long:
-      'Jedes Pixel iteriert in doppelter Gleitkommapräzision, damit die Struktur auch bei extremer Vergrößerung nicht in Pixelbrei zerfällt. '
-      + 'Die Iterationszahl wächst automatisch mit dem Zoom, Supersampling und Renderauflösung kommen obendrauf. '
-      + 'Kein Anschlag nach oben: Du kannst beliebig weit hineinzoomen.',
-    tech: 'Fragment-Shader · Iteration',
+      'Jedes Pixel baut seine Koordinate aus einem 60 Bit breiten Nachkommafeld und iteriert in reiner Ganzzahlarithmetik, '
+      + 'sobald du tiefer als rund 800-fach zoomst. Ganzzahlen kann kein Compiler umsortieren, deshalb bleibt das Bild dort scharf, '
+      + 'wo Doppel-Float-Shader auf Apple-GPUs stillschweigend auf einfache Genauigkeit zurückfallen. '
+      + 'Die Iterationszahl wächst automatisch mit dem Zoom, Supersampling und Renderauflösung kommen obendrauf.',
+    tech: 'Festkomma 64 Bit · Iteration',
     icon: ICONS.layers,
     mount: mountMandelbrot,
   },
@@ -98,6 +101,30 @@ const EXPERIMENTS: ExperimentDefinition[] = [
     icon: ICONS.orbit,
     mount: mountPathtracer,
   },
+  {
+    slug: 'reaction',
+    title: 'Reaktions-Diffusion',
+    description: 'Gray-Scott-Chemie auf der GPU: zwei Stoffe diffundieren und reagieren zu Korallen, Zellen und Wurmgeflechten.',
+    long:
+      'Zwei Chemikalien durchdringen sich, reagieren miteinander und bilden aus winzigen Störungen komplexe Muster — vollständig auf der GPU, '
+      + 'Schritt für Schritt. Jeder Schritt liest ein 3×3-Nachbarschaftsfenster für den Laplace-Operator und schreibt zwei neue Konzentrationen. '
+      + 'Raster und Schritte pro Bild skalieren die Last linear; die Regler für Zufuhr und Abbau wechseln zwischen Korallen, Zellen und chaotischem Flimmern.',
+    tech: 'GPGPU · Reaktions-Diffusion',
+    icon: ICONS.waves,
+    mount: mountReaction,
+  },
+  {
+    slug: 'attractor',
+    title: 'Seltsamer Attraktor',
+    description: 'Bis zu eine Million Partikel in einem Aizawa-Attraktor, additiv in einen nachleuchtenden Spurenpuffer gezeichnet.',
+    long:
+      'Jedes Partikel integriert ein chaotisches Vektorfeld mit einem Runge-Kutta-Schritt zweiter Ordnung und wird anschließend als '
+      + 'additiv geblendeter Punkt in einen Float-Puffer gezeichnet, der pro Bild leicht abklingt und am Ende tonemapped wird. '
+      + 'Aus einer Million Partikel wird so eine leuchtende, langsam rotierende Form, die aus nichts als einer Formel entsteht.',
+    tech: 'Partikel · Tonemapping',
+    icon: ICONS.orbit,
+    mount: mountAttractor,
+  },
 ];
 
 export function experimentsView(): View {
@@ -128,7 +155,7 @@ export function experimentsView(): View {
       el(
         'p',
         { class: 'lede', style: 'margin-top:8px' },
-        'Sieben Experimente, die vollständig auf deinem Gerät berechnet und gerendert werden. Sie sind unabhängig von den standardisierten Scores: '
+        'Neun Experimente, die vollständig auf deinem Gerät berechnet und gerendert werden. Sie sind unabhängig von den standardisierten Scores: '
           + 'Sie zeigen, wie sich Rechenlast und Bildrate verhalten, wenn du Qualität, Auflösung oder Detailgrad veränderst.',
       ),
     ),
