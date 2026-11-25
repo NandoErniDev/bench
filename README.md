@@ -31,7 +31,7 @@ ohne Server und ohne Datenübertragung.
 - **GPU-Benchmark** mit Shader-Berechnung, Vertex-Durchsatz, einer beleuchteten 3D-Szene und einer GPGPU-Partikelsimulation.
 - **Overall-Score** aus CPU und GPU mit offengelegter Formel, alle Einzelwerte bleiben sichtbar.
 - **Effizienz und Stabilität** ausschließlich aus gemessenen Größen – keine erfundenen Wattwerte.
-- **Neun interaktive Experimente**, die unabhängig von den Scores auf dem Gerät gerechnet werden.
+- **Zwölf interaktive Experimente**, die unabhängig von den Scores auf dem Gerät gerechnet werden.
 - **Ergebnisbericht** mit Diagrammen und eine teilbare Grafik über das native Teilen-Menü.
 
 Jeder Score entsteht aus einer echten Berechnung auf dem Gerät. Es gibt keine hinterlegten Hardwarewerte,
@@ -165,23 +165,34 @@ Unabhängig von den standardisierten Scores – frei wählbare Last, echte Berec
    in JavaScript. Die Iterationszahl wächst automatisch mit der Zoomstufe, dazu 1–4 Samples pro Pixel, vier Paletten
    und einstellbare Renderauflösung; Anzeige von Frame-Zeit, Zoomstufe, Genauigkeitspfad und Pixeldurchsatz.
 2. **Volume Shader** – Echtzeit-Raymarching durch ein prozedurales Dichtefeld aus vier Rauschebenen mit
-   Gradienten-Beleuchtung; 24–384 Schritte, Volumendichte und Renderauflösung regelbar.
-3. **Particle Simulation** – bis zu 1 048 576 Partikel, wahlweise als GPGPU-Ping-Pong oder als
+   Gradienten-Beleuchtung; 24–1536 Schritte, Volumendichte und Renderauflösung regelbar.
+3. **Particle Simulation** – bis zu 4 194 304 Partikel, wahlweise als GPGPU-Ping-Pong oder als
    JavaScript-Schleife auf der CPU; beide Pfade werden getrennt gemessen.
-4. **3D Rendering** – prozedurale Landschaft mit Shadow-Map, PCF-Schatten und Nebel; Detailgrad,
-   Auflösung und Schatten zuschaltbar.
-5. **Mandelbulb Raymarcher** – Fraktal als Distanzfeld, 64–1024 Raymarching-Schritte mit voller
-   Mandelbulb-Iteration (bis 32 Iterationen), 1–4 Samples pro Pixel, 9-stufige Ambient Occlusion und
+4. **3D Rendering** – prozedurale Landschaft mit Shadow-Map, PCF-Schatten und Nebel; Detailgrad bis
+   1024² Gitter, Auflösung und Schatten zuschaltbar.
+5. **Mandelbulb Raymarcher** – Fraktal als Distanzfeld, 64–4096 Raymarching-Schritte mit voller
+   Mandelbulb-Iteration (bis 64 Iterationen), 1–16 Samples pro Pixel, 9-stufige Ambient Occlusion und
    Soft-Shadows über 96 Schritte. Bewusst so schwer, dass Smartphones in den einstelligen FPS-Bereich
    fallen – auf einem M1 ist selbst der Standard schon sichtbar zäh.
 6. **GPU Fluid** – Navier-Stokes auf der GPU: Advektion, Wirklichkeitskonfinement, Jacobi-Drucksolver
-   (4–192 Iterationen pro Bild) und Gradientenabzug im Ping-Pong; Simulationsraster 128²–2048².
-7. **Path Tracer** – progressive Monte-Carlo-Pfadverfolgung mit Float-Akkumulation, 1–16 Bounces und
-   1–16 Samples pro Bild; stehende Kamera konvergiert, Bewegung startet die Akkumulation neu.
+   (4–1024 Iterationen pro Bild) und Gradientenabzug im Ping-Pong; Simulationsraster 128²–3072².
+7. **Path Tracer** – progressive Monte-Carlo-Pfadverfolgung mit Float-Akkumulation, 1–64 Bounces und
+   1–64 Samples pro Bild; stehende Kamera konvergiert, Bewegung startet die Akkumulation neu.
 8. **Reaktions-Diffusion** – Gray-Scott-Gleichungen auf der GPU: neun Texturlesungen pro Texel und Schritt,
-   bis 2048² Raster und 64 Schritte pro Bild; Zufuhr und Abbau wechseln zwischen Korallen, Zellen und Flimmern.
-9. **Seltsamer Attraktor** – bis zu 1 048 576 Partikel im Aizawa-Vektorfeld (Runge-Kutta 2. Ordnung), additiv
+   bis 3072² Raster und 256 Schritte pro Bild; Zufuhr und Abbau wechseln zwischen Korallen, Zellen und Flimmern.
+9. **Seltsamer Attraktor** – bis zu 4 194 304 Partikel im Aizawa-Vektorfeld (Runge-Kutta 2. Ordnung), additiv
    in einen abklingenden Float-Spurenpuffer gezeichnet und anschließend tonemapped.
+10. **Fraktur-Schlucht** – 3D-Landschaft ohne Geometrie: Die Oberfläche wird pro Strahl aus ridged Rauschen
+    geraymarcht, mit acht Bisektionsschritten verfeinert, über 96 Schritte weich beschattet und in einem
+    Wasserspiegel mit Fresnel-Reflexion gespiegelt. Wolken, Nebel und Sonnenstreuung liegen im Shader,
+    Detailgrad (2–8 Oktaven), Schrittzahl (64–2048), Samples (1–16) und Auflösung bis 250 % sind regelbar.
+11. **Schleimpilz-Netzwerk** – Physarum-Polycephalum auf der GPU: bis zu 4 194 304 Agenten lesen drei
+    Sensoren aus einer Float-Textur, drehen sich und schreiben ihre Spur additiv in ein Raster bis 4096²,
+    das pro Schritt verwischt und gedämpft wird. Aus Nachlaufen entstehen Adernnetze.
+12. **Ereignishorizont** – ein Schwarzes Loch mit echter Lichtkrümmung: Jeder Strahl integriert die
+    Bahngleichung u″ = −u + 1,5·rs·u² mit Runge-Kutta 4. Ordnung, bis er den Horizont kreuzt oder entkommt.
+    Die Akkretionsscheibe wird im Äquatorialschnitt getroffen, per Turbulenz strukturiert und über die
+    Dopplerverschiebung einseitig aufgehellt; 64–4096 Bahnschritte, 1–16 Samples pro Pixel, Auflösung bis 250 %.
 
 ---
 
@@ -215,7 +226,7 @@ src/
 │   └── storage.ts         Theme und lokale Läufe
 ├── workers/cpu.worker.ts  CPU-Messung im Worker
 ├── ui/                    Ansichten, Komponenten, SVG-Diagramme, Router
-├── labs/                  Mandelbrot, Volume, Partikel, Terrain
+├── labs/                  Mandelbrot, Volume, Partikel, Terrain, Schlucht, Netzwerk, Loch
 ├── share/card.ts          Ergebnisgrafik und natives Teilen
 └── styles.css             Design-System (hell/dunkel)
 ```

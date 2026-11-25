@@ -8,6 +8,9 @@ import { mountFluid } from '../labs/fluid';
 import { mountPathtracer } from '../labs/pathtracer';
 import { mountReaction } from '../labs/reaction';
 import { mountAttractor } from '../labs/attractor';
+import { mountCanyon } from '../labs/canyon';
+import { mountPhysarum } from '../labs/physarum';
+import { mountBlackhole } from '../labs/blackhole';
 import { note, tag } from './components';
 import type { View } from './types';
 
@@ -125,6 +128,48 @@ const EXPERIMENTS: ExperimentDefinition[] = [
     icon: ICONS.orbit,
     mount: mountAttractor,
   },
+  {
+    slug: 'canyon',
+    title: 'Fraktur-Schlucht',
+    description:
+      'Eine 3D-Landschaft, die es als Geometrie nicht gibt: geraymarchte Schluchtwände, Wasserspiegel mit Spiegelung, Wolken und weiche Schatten.',
+    long:
+      'Kein Netz, keine Textur, keine Dreiecke: Jeder Bildpunkt tastet eine Höhenfunktion aus bereichsverschachteltem Rauschen ab, '
+      + 'verfeinert den Treffer mit zehn Bisektionsschritten und berechnet die Normale aus vier weiteren Abfragen. '
+      + 'Der Schattenstrahl läuft mit bis zu 96 Schritten in dieselbe Funktion, die Schlucht spiegelt sich in einem Wasser spiegel, '
+      + 'und die Kamera fliegt von selbst durch das Tal. Sonnenhöhe, Oktaven und Schrittzahl verändern Aussehen und Last direkt.',
+    tech: 'Raymarching · Landschaft',
+    icon: ICONS.cube,
+    mount: mountCanyon,
+  },
+  {
+    slug: 'physarum',
+    title: 'Schleimpilz-Netzwerk',
+    description:
+      'Bis zu 4,2 Millionen Agenten tasten ein Pheromonfeld ab und bauen aus reinem Nachlaufen ein Adernetz — Physarum auf der GPU.',
+    long:
+      'Jeder Agent liest drei Sensoren aus einer Float-Textur, dreht sich zum stärksten Signal, läuft weiter und hinterlässt einen Punkt. '
+      + 'Zwischen den Schritten wird die Spur verwischt und abgeschwächt. Aus dieser einen Regel entstehen Adern, Ringe und '
+      + 'Verbindungen, die wie geplante Infrastruktur aussehen — und trotzdem nirgends geplant wurden. '
+      + 'Agentenzahl, Spur-Raster und Schritte pro Bild skalieren die Last; die Regler formen das Netzwerk.',
+    tech: 'GPGPU · Agenten',
+    icon: ICONS.waves,
+    mount: mountPhysarum,
+  },
+  {
+    slug: 'blackhole',
+    title: 'Ereignishorizont',
+    description:
+      'Ein Schwarzes Loch mit echter Strahlkrümmung: Photonenbahnen in der Schwarzschild-Metrik, Akkretionsscheibe und Doppler-Aufhellung.',
+    long:
+      'Jeder Strahl löst die Bahngleichung u″ = −u + 1,5·rs·u² mit Runge-Kutta vierter Ordnung und läuft in Polarkoordinaten um das Loch. '
+      + 'Strahlen, die den Horizont kreuzen, enden schwarz; alle anderen entkommen — oft erst nach mehreren Runden. '
+      + 'Deshalb erscheint die Akkretionsscheibe hinter dem Loch als Bogen über und unter der Leere, und die eine Seite der Scheibe '
+      + 'ist durch die Doppler-Verschiebung deutlich heller als die andere. Das ist kein Bild, das ist eine Integration.',
+    tech: 'Schwarzschild · Linseneffekt',
+    icon: ICONS.orbit,
+    mount: mountBlackhole,
+  },
 ];
 
 export function experimentsView(): View {
@@ -155,7 +200,7 @@ export function experimentsView(): View {
       el(
         'p',
         { class: 'lede', style: 'margin-top:8px' },
-        'Neun Experimente, die vollständig auf deinem Gerät berechnet und gerendert werden. Sie sind unabhängig von den standardisierten Scores: '
+        'Zwölf Experimente, die vollständig auf deinem Gerät berechnet und gerendert werden. Sie sind unabhängig von den standardisierten Scores: '
           + 'Sie zeigen, wie sich Rechenlast und Bildrate verhalten, wenn du Qualität, Auflösung oder Detailgrad veränderst.',
       ),
     ),

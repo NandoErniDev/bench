@@ -74,7 +74,7 @@ void main() {
   vec3 col = vec3(0.0);
   float t = 0.2;
 
-  for (int i = 0; i < 384; i++) {
+  for (int i = 0; i < 1536; i++) {
     if (i >= uSteps) break;
     vec3 p = ro + rd * t;
     float d = density(p) * uBass;
@@ -110,8 +110,8 @@ export function mountVolume(host: HTMLElement, controls: HTMLElement): { destroy
   const quality = rangeControl({
     label: 'Raymarching-Schritte',
     min: 24,
-    max: 384,
-    step: 8,
+    max: 1536,
+    step: 16,
     value: state.steps,
     format: (value) => String(value),
     onInput: (value) => {
@@ -121,8 +121,8 @@ export function mountVolume(host: HTMLElement, controls: HTMLElement): { destroy
 
   const resolution = rangeControl({
     label: 'Renderauflösung',
-    min: 0.4,
-    max: 2,
+    min: 0.25,
+    max: 3,
     step: 0.05,
     value: 1,
     format: (value) => `${Math.round(value * 100)} %`,
@@ -132,7 +132,7 @@ export function mountVolume(host: HTMLElement, controls: HTMLElement): { destroy
   const density = rangeControl({
     label: 'Volumendichte',
     min: 0.5,
-    max: 1.6,
+    max: 4,
     step: 0.05,
     value: state.density,
     format: (value) => `${fmtNum(value, 2)} ×`,

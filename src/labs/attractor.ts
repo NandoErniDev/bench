@@ -160,6 +160,7 @@ const COUNTS = [
   { value: '65536', label: '65 536' },
   { value: '262144', label: '262 144' },
   { value: '1048576', label: '1 048 576' },
+  { value: '4194304', label: '4 194 304' },
 ];
 
 export function mountAttractor(host: HTMLElement, controls: HTMLElement): { destroy: () => void } {
@@ -294,7 +295,7 @@ export function mountAttractor(host: HTMLElement, controls: HTMLElement): { dest
   const speedControl = rangeControl({
     label: 'Tempo',
     min: 0.2,
-    max: 4,
+    max: 16,
     step: 0.1,
     value: state.speed,
     format: (value) => `${value.toFixed(1)} ×`,
@@ -306,8 +307,8 @@ export function mountAttractor(host: HTMLElement, controls: HTMLElement): { dest
   const decayControl = rangeControl({
     label: 'Spurnachleuchten',
     min: 0.86,
-    max: 0.995,
-    step: 0.005,
+    max: 0.9995,
+    step: 0.0005,
     value: state.decay,
     format: (value) => value.toFixed(3).replace('.', ','),
     onInput: (value) => {
@@ -317,8 +318,8 @@ export function mountAttractor(host: HTMLElement, controls: HTMLElement): { dest
 
   const exposureControl = rangeControl({
     label: 'Helligkeit',
-    min: 0.4,
-    max: 3,
+    min: 0.1,
+    max: 12,
     step: 0.05,
     value: state.exposure,
     format: (value) => value.toFixed(2).replace('.', ','),

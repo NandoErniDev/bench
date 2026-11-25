@@ -317,7 +317,7 @@ export function mountTerrain(host: HTMLElement, controls: HTMLElement): { destro
   const detailControl = rangeControl({
     label: 'Detailgrad (Gitter)',
     min: 64,
-    max: 320,
+    max: 1024,
     step: 32,
     value: state.detail,
     format: (value) => `${value}²`,
@@ -330,7 +330,7 @@ export function mountTerrain(host: HTMLElement, controls: HTMLElement): { destro
   const resolutionControl = rangeControl({
     label: 'Renderauflösung',
     min: 0.4,
-    max: 1.5,
+    max: 2.5,
     step: 0.05,
     value: 1,
     format: (value) => `${Math.round(value * 100)} %`,

@@ -26,7 +26,7 @@ float mandelbulb(vec3 p) {
   vec3 z = p;
   float dr = 1.0;
   float r = 0.0;
-  for (int i = 0; i < 48; i++) {
+  for (int i = 0; i < 64; i++) {
     if (i >= uIter) break;
     r = length(z);
     if (r > BAILOUT) break;
@@ -110,7 +110,7 @@ vec3 render(vec2 fragCoord) {
   float t = 0.75;
   float glow = 0.0;
   bool hit = false;
-  for (int i = 0; i < 1024; i++) {
+  for (int i = 0; i < 4096; i++) {
     if (i >= uSteps) break;
     vec3 p = ro + rd * t;
     float d = mandelbulb(p);
@@ -135,12 +135,12 @@ vec3 render(vec2 fragCoord) {
 void main() {
   vec3 total = vec3(0.0);
   float taken = 0.0;
-  for (int s = 0; s < 4; s++) {
+  for (int s = 0; s < 16; s++) {
     if (s >= uAA) break;
     vec2 jitter = vec2(0.0);
     if (uAA > 1) {
       float fs = float(s);
-      jitter = vec2(mod(fs, 2.0), floor(fs * 0.5)) * 0.5 - 0.25;
+      jitter = (vec2(mod(fs, 4.0), floor(fs * 0.25)) + 0.5) / 4.0 - 0.5;
     }
     total += render(gl_FragCoord.xy + jitter);
     taken += 1.0;
@@ -226,8 +226,8 @@ export function mountRaymarch(host: HTMLElement, controls: HTMLElement): { destr
   const stepsControl = rangeControl({
     label: 'Raymarching-Schritte',
     min: 64,
-    max: 1024,
-    step: 16,
+    max: 4096,
+    step: 32,
     value: view.steps,
     format: (value) => String(value),
     onInput: (value) => {
@@ -238,7 +238,7 @@ export function mountRaymarch(host: HTMLElement, controls: HTMLElement): { destr
   const iterControl = rangeControl({
     label: 'Fraktal-Iterationen',
     min: 3,
-    max: 32,
+    max: 64,
     step: 1,
     value: view.iter,
     format: (value) => String(value),
@@ -250,7 +250,7 @@ export function mountRaymarch(host: HTMLElement, controls: HTMLElement): { destr
   const powerControl = rangeControl({
     label: 'Mandelbulb-Potenz',
     min: 2,
-    max: 12,
+    max: 32,
     step: 0.5,
     value: view.power,
     format: (value) => fmtNum(value, 1),
@@ -262,7 +262,7 @@ export function mountRaymarch(host: HTMLElement, controls: HTMLElement): { destr
   const aaControl = rangeControl({
     label: 'Samples pro Pixel',
     min: 1,
-    max: 4,
+    max: 16,
     step: 1,
     value: 2,
     format: (value) => String(value),
@@ -273,8 +273,8 @@ export function mountRaymarch(host: HTMLElement, controls: HTMLElement): { destr
 
   const resolutionControl = rangeControl({
     label: 'Renderauflösung',
-    min: 0.4,
-    max: 2,
+    min: 0.25,
+    max: 3,
     step: 0.05,
     value: 1,
     format: (value) => `${Math.round(value * 100)} %`,

@@ -304,6 +304,7 @@ export function mountReaction(host: HTMLElement, controls: HTMLElement): { destr
       { value: '1024', label: '1024 × 1024' },
       { value: '1536', label: '1536 × 1536' },
       { value: '2048', label: '2048 × 2048' },
+      { value: '3072', label: '3072 × 3072' },
     ],
     value: String(state.grid),
     onChange: (value) => {
@@ -315,7 +316,7 @@ export function mountReaction(host: HTMLElement, controls: HTMLElement): { destr
   const stepsControl = rangeControl({
     label: 'Schritte pro Bild',
     min: 1,
-    max: 64,
+    max: 256,
     step: 1,
     value: state.steps,
     format: (value) => `${value} ×`,

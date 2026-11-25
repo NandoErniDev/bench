@@ -52,19 +52,19 @@ ${COLOR_GLSL}
 
 void main() {
   vec3 total = vec3(0.0);
-  for (int s = 0; s < 4; s++) {
+  for (int s = 0; s < 16; s++) {
     if (s >= uAA) break;
     vec2 jitter = vec2(0.0);
     if (uAA > 1) {
       float fs = float(s);
-      jitter = vec2(mod(fs, 2.0), floor(fs * 0.5)) * 0.5 - 0.25;
+      jitter = (vec2(mod(fs, 4.0), floor(fs * 0.25)) + 0.5) / 4.0 - 0.5;
     }
     vec2 uv = (gl_FragCoord.xy + jitter - 0.5 * uRes) / uRes.y;
     vec2 c = uCenter + uv * uScale;
     vec2 z = vec2(0.0);
     float m = 0.0;
     int iter = 0;
-    for (int i = 0; i < 4096; i++) {
+    for (int i = 0; i < 8192; i++) {
       if (i >= uMaxIter) { iter = uMaxIter; break; }
       z = vec2(z.x * z.x - z.y * z.y, 2.0 * z.x * z.y) + c;
       m = dot(z, z);
@@ -221,12 +221,12 @@ ${FIXED_HELPERS}
 
 void main() {
   vec3 total = vec3(0.0);
-  for (int s = 0; s < 4; s++) {
+  for (int s = 0; s < 16; s++) {
     if (s >= uAA) break;
     vec2 jitter = vec2(0.0);
     if (uAA > 1) {
       float fs = float(s);
-      jitter = vec2(mod(fs, 2.0), floor(fs * 0.5)) * 0.5 - 0.25;
+      jitter = (vec2(mod(fs, 4.0), floor(fs * 0.25)) + 0.5) / 4.0 - 0.5;
     }
     vec2 uv = (gl_FragCoord.xy + jitter - 0.5 * uRes) / uRes.y;
 
@@ -238,7 +238,7 @@ void main() {
     int iter = 0;
     float m = 0.0;
 
-    for (int i = 0; i < 4096; i++) {
+    for (int i = 0; i < 8192; i++) {
       if (i >= uMaxIter) { iter = uMaxIter; break; }
       uvec2 zr2 = mulQ60(zr, zr);
       uvec2 zi2 = mulQ60(zi, zi);
@@ -397,8 +397,8 @@ export function mountMandelbrot(host: HTMLElement, controls: HTMLElement): { des
   const iterationControl = rangeControl({
     label: 'Basis-Iterationen',
     min: 64,
-    max: 2048,
-    step: 16,
+    max: 8192,
+    step: 32,
     value: view.iter,
     format: (value) => String(value),
     onInput: (value) => {
@@ -426,7 +426,7 @@ export function mountMandelbrot(host: HTMLElement, controls: HTMLElement): { des
   const aaControl = rangeControl({
     label: 'Samples pro Pixel',
     min: 1,
-    max: 4,
+    max: 16,
     step: 1,
     value: view.aa,
     format: (value) => String(value),
@@ -437,8 +437,8 @@ export function mountMandelbrot(host: HTMLElement, controls: HTMLElement): { des
 
   const resolutionControl = rangeControl({
     label: 'Renderauflösung',
-    min: 0.4,
-    max: 2,
+    min: 0.25,
+    max: 3,
     step: 0.05,
     value: 1,
     format: (value) => `${Math.round(value * 100)} %`,
@@ -510,9 +510,9 @@ export function mountMandelbrot(host: HTMLElement, controls: HTMLElement): { des
   );
 
   const effectiveIter = () => {
-    if (!view.autoIter) return Math.min(4096, Math.round(view.iter));
+    if (!view.autoIter) return Math.min(8192, Math.round(view.iter));
     const depth = Math.log2(Math.max(1, BASE_SCALE / view.scale));
-    return Math.min(4096, Math.round(view.iter + 110 * depth));
+    return Math.min(8192, Math.round(view.iter + 110 * depth));
   };
 
   surface.start((_time, metrics) => {

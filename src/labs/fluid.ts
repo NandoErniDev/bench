@@ -256,7 +256,7 @@ export function mountFluid(host: HTMLElement, controls: HTMLElement): { destroy:
   };
 
   const state = { simRes: 512, pressureIterations: 64, dyeDecay: 0.9, auto: true };
-  const maxGrid = Math.min(2048, gl.getParameter(gl.MAX_TEXTURE_SIZE) as number);
+  const maxGrid = Math.min(3072, gl.getParameter(gl.MAX_TEXTURE_SIZE) as number);
 
   let velocity: PingPong;
   let dye: PingPong;
@@ -373,6 +373,7 @@ export function mountFluid(host: HTMLElement, controls: HTMLElement): { destroy:
       { value: '512', label: '512 × 512' },
       { value: '1024', label: '1024 × 1024' },
       { value: '2048', label: '2048 × 2048' },
+      { value: '3072', label: '3072 × 3072' },
     ],
     value: String(state.simRes),
     onChange: (value) => {
@@ -384,8 +385,8 @@ export function mountFluid(host: HTMLElement, controls: HTMLElement): { destroy:
   const iterationControl = rangeControl({
     label: 'Druck-Iterationen',
     min: 4,
-    max: 192,
-    step: 2,
+    max: 1024,
+    step: 4,
     value: state.pressureIterations,
     format: (value) => `${value} ×`,
     onInput: (value) => {

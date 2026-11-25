@@ -74,6 +74,7 @@ const COUNTS = [
   { value: '65536', label: '65 536' },
   { value: '262144', label: '262 144' },
   { value: '1048576', label: '1 048 576' },
+  { value: '4194304', label: '4 194 304' },
 ];
 
 function makeTarget(gl: WebGL2RenderingContext, size: number): Target {
