@@ -28,8 +28,8 @@ const FEATURES = [
   {
     icon: ICONS.layers,
     title: 'Interactive Experiments',
-    text: 'Mandelbrot Explorer, Volume Shader, Partikelsimulation und prozedurale 3D-Landschaften. Direkt auf dem Gerät berechnet — unabhängig von den Scores.',
-    meta: '4 Labs · Echtzeit',
+    text: 'Mandelbrot, Volume Shader, Partikelsimulation, 3D-Landschaft, Mandelbulb-Raymarcher, GPU-Fluid und Path Tracer. Direkt auf dem Gerät berechnet — unabhängig von den Scores.',
+    meta: '7 Labs · Echtzeit',
   },
 ];
 

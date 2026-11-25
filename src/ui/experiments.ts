@@ -3,6 +3,9 @@ import { mountMandelbrot } from '../labs/mandelbrot';
 import { mountVolume } from '../labs/volume';
 import { mountParticles } from '../labs/particles';
 import { mountTerrain } from '../labs/terrain';
+import { mountRaymarch } from '../labs/raymarch';
+import { mountFluid } from '../labs/fluid';
+import { mountPathtracer } from '../labs/pathtracer';
 import { note, tag } from './components';
 import type { View } from './types';
 
@@ -57,6 +60,41 @@ const EXPERIMENTS: ExperimentDefinition[] = [
     icon: ICONS.cube,
     mount: mountTerrain,
   },
+  {
+    slug: 'raymarch',
+    title: 'Mandelbulb Raymarcher',
+    description: 'Ein Fraktal als Distanzfeld: bis zu 400 Raymarching-Schritte, jeder mit voller Mandelbulb-Iteration.',
+    long:
+      'Der Shader sucht die Oberfläche eines Mandelbulbs über seine Distanzfunktion — ohne Mesh, ohne Dreiecke. '
+      + 'Jeder Schritt ruft eine komplette Fraktal-Iteration auf, Beleuchtung, Ambient Occlusion und Schatten lösen weitere Abfragen aus. '
+      + 'Auf Smartphones fällt die Bildrate hier bewusst in den einstelligen Bereich.',
+    tech: 'Raymarching · Distanzfeld',
+    icon: ICONS.sphere,
+    mount: mountRaymarch,
+  },
+  {
+    slug: 'fluid',
+    title: 'GPU Fluid',
+    description: 'Navier-Stokes in Echtzeit: Advektion, Wirbelstärke und bis zu 64 Druck-Iterationen pro Bild.',
+    long:
+      'Pro Frame laufen Advektion, Wirbelstärke, Divergenz, Abklingen, der Jacobi-Drucksolver und der Gradientenabzug über das komplette Raster. '
+      + 'Jeder Durchlauf schreibt ein Float-Ziel; bei 256² und 20 Iterationen sind das über zwei Millionen Texel pro Bild.',
+    tech: 'GPGPU · Fluiddynamik',
+    icon: ICONS.waves,
+    mount: mountFluid,
+  },
+  {
+    slug: 'pathtracer',
+    title: 'Path Tracer',
+    description: 'Progressive Monte-Carlo-Pfadverfolgung mit Float-Akkumulation — Rauschen sinkt mit jedem Sample.',
+    long:
+      'Jedes Sample verfolgt einen Strahl über mehrere diffuse Reflexionen und addiert das Ergebnis in einen Fließkommapuffer. '
+      + 'Stillstehende Kamera konvergiert zu einem sauberen Bild, jede Bewegung startet die Akkumulation neu. '
+      + 'Das ist die schwerste Last der Sammlung — die GPU rechnet hier ohne Pause.',
+    tech: 'Monte-Carlo · Akkumulation',
+    icon: ICONS.orbit,
+    mount: mountPathtracer,
+  },
 ];
 
 export function experimentsView(): View {
@@ -87,7 +125,7 @@ export function experimentsView(): View {
       el(
         'p',
         { class: 'lede', style: 'margin-top:8px' },
-        'Vier Experimente, die vollständig auf deinem Gerät berechnet und gerendert werden. Sie sind unabhängig von den standardisierten Scores: '
+        'Sieben Experimente, die vollständig auf deinem Gerät berechnet und gerendert werden. Sie sind unabhängig von den standardisierten Scores: '
           + 'Sie zeigen, wie sich Rechenlast und Bildrate verhalten, wenn du Qualität, Auflösung oder Detailgrad veränderst.',
       ),
     ),
@@ -96,7 +134,8 @@ export function experimentsView(): View {
       'div',
       { class: 'section' },
       note(
-        'Die Experimente laufen in Echtzeit und belasten die GPU dauerhaft. Für einen Benchmark mit stabilen, vergleichbaren Werten nutze den '
+        'Die Experimente laufen in Echtzeit und belasten die GPU dauerhaft — Mandelbulb-Raymarcher, GPU-Fluid und Path Tracer sind bewusst so schwer, '
+          + 'dass sie auf Smartphones sichtbar einbrechen. Für einen Benchmark mit stabilen, vergleichbaren Werten nutze den '
           + '<a href="#/">standardisierten Test</a>. Alle Anzeigen sind echte Messwerte: Frame-Zeiten aus dem Render-Loop, keinerlei geschätzte Auslastungsprozente.',
         'default',
       ),

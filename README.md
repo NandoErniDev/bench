@@ -31,7 +31,7 @@ ohne Server und ohne Datenübertragung.
 - **GPU-Benchmark** mit Shader-Berechnung, Vertex-Durchsatz, einer beleuchteten 3D-Szene und einer GPGPU-Partikelsimulation.
 - **Overall-Score** aus CPU und GPU mit offengelegter Formel, alle Einzelwerte bleiben sichtbar.
 - **Effizienz und Stabilität** ausschließlich aus gemessenen Größen – keine erfundenen Wattwerte.
-- **Vier interaktive Experimente**, die unabhängig von den Scores auf dem Gerät gerechnet werden.
+- **Sieben interaktive Experimente**, die unabhängig von den Scores auf dem Gerät gerechnet werden.
 - **Ergebnisbericht** mit Diagrammen und eine teilbare Grafik über das native Teilen-Menü.
 
 Jeder Score entsteht aus einer echten Berechnung auf dem Gerät. Es gibt keine hinterlegten Hardwarewerte,
@@ -167,6 +167,13 @@ Unabhängig von den standardisierten Scores – frei wählbare Last, echte Berec
    JavaScript-Schleife auf der CPU; beide Pfade werden getrennt gemessen.
 4. **3D Rendering** – prozedurale Landschaft mit Shadow-Map, PCF-Schatten und Nebel; Detailgrad,
    Auflösung und Schatten zuschaltbar.
+5. **Mandelbulb Raymarcher** – Fraktal als Distanzfeld, bis zu 400 Raymarching-Schritte mit voller
+   Mandelbulb-Iteration, 1–4 Samples pro Pixel, Soft-Shadows und Ambient Occlusion. Bewusst so schwer,
+   dass Smartphones in den einstelligen FPS-Bereich fallen.
+6. **GPU Fluid** – Navier-Stokes auf der GPU: Advektion, Wirklichkeitskonfinement, Jacobi-Drucksolver
+   (4–64 Iterationen pro Bild) und Gradientenabzug im Ping-Pong; Simulationsraster 128²–512².
+7. **Path Tracer** – progressive Monte-Carlo-Pfadverfolgung mit Float-Akkumulation, 1–8 Bounces und
+   1–4 Samples pro Bild; stehende Kamera konvergiert, Bewegung startet die Akkumulation neu.
 
 ---
 
