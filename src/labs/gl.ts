@@ -1,6 +1,9 @@
 /** Shared WebGL helpers for the interactive experiments. */
 
-import { el } from '../core/util';
+import { el, svg } from '../core/util';
+
+const ICON_EXPAND = 'M4 9V4h5M20 15v5h-5M4 15v5h5M20 9V4h-5';
+const ICON_COLLAPSE = 'M9 4v5H4M15 20v-5h5M9 20v-5H4M15 4v5h5';
 
 export function compileProgram(
   gl: WebGL2RenderingContext,
@@ -73,6 +76,12 @@ export class LabSurface {
   private emaMs = 16.7;
   private resizeObserver: ResizeObserver;
   private hudCells = new Map<string, HTMLElement>();
+  private fullscreenButton: HTMLButtonElement;
+  private pseudoFullscreen = false;
+  private onFullscreenChange = () => this.syncFullscreenUi();
+  private onKeyDown = (event: KeyboardEvent) => {
+    if (event.key === 'Escape' && this.pseudoFullscreen) this.exitPseudoFullscreen();
+  };
 
   constructor(host: HTMLElement, options: { alpha?: boolean; depth?: boolean } = {}) {
     this.host = host;
@@ -81,7 +90,17 @@ export class LabSurface {
     this.canvas.style.width = '100%';
     this.canvas.style.height = '100%';
     this.hud = el('div', { class: 'lab-hud' });
-    host.append(this.canvas, this.hud);
+    this.fullscreenButton = el('button', {
+      class: 'lab-fullscreen',
+      type: 'button',
+      title: 'Vollbild',
+      'aria-label': 'Rendering im Vollbild anzeigen',
+      on: { click: () => this.toggleFullscreen() },
+    });
+    this.fullscreenButton.appendChild(svg(ICON_EXPAND));
+    host.append(this.canvas, this.hud, this.fullscreenButton);
+    document.addEventListener('fullscreenchange', this.onFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', this.onFullscreenChange);
 
     const gl = this.canvas.getContext('webgl2', {
       alpha: options.alpha ?? false,
@@ -122,6 +141,70 @@ export class LabSurface {
       this.hudCells.set(key, label);
     }
     label.textContent = value;
+  }
+
+  // ------------------------------------------------------------ fullscreen
+  private fullscreenActive(): boolean {
+    return this.pseudoFullscreen || document.fullscreenElement === this.host;
+  }
+
+  private toggleFullscreen(): void {
+    if (this.fullscreenActive()) {
+      this.leaveFullscreen();
+      return;
+    }
+    const target = this.host as HTMLElement & {
+      webkitRequestFullscreen?: () => Promise<void> | void;
+    };
+    if (typeof target.requestFullscreen === 'function') {
+      target.requestFullscreen().catch(() => this.enterPseudoFullscreen());
+      return;
+    }
+    if (typeof target.webkitRequestFullscreen === 'function') {
+      target.webkitRequestFullscreen();
+      return;
+    }
+    // iPhone Safari only allows video elements in fullscreen, so the lab is
+    // pinned over the page instead.
+    this.enterPseudoFullscreen();
+  }
+
+  private leaveFullscreen(): void {
+    if (this.pseudoFullscreen) {
+      this.exitPseudoFullscreen();
+      return;
+    }
+    const doc = document as Document & { webkitExitFullscreen?: () => void };
+    if (doc.fullscreenElement) doc.exitFullscreen().catch(() => undefined);
+    else if (doc.webkitExitFullscreen) doc.webkitExitFullscreen();
+  }
+
+  private enterPseudoFullscreen(): void {
+    this.pseudoFullscreen = true;
+    this.host.classList.add('pseudo-fullscreen');
+    document.body.classList.add('lab-fullscreen-active');
+    window.addEventListener('keydown', this.onKeyDown);
+    this.syncFullscreenUi();
+  }
+
+  private exitPseudoFullscreen(): void {
+    this.pseudoFullscreen = false;
+    this.host.classList.remove('pseudo-fullscreen');
+    document.body.classList.remove('lab-fullscreen-active');
+    window.removeEventListener('keydown', this.onKeyDown);
+    this.syncFullscreenUi();
+  }
+
+  private syncFullscreenUi(): void {
+    const active = this.fullscreenActive();
+    this.fullscreenButton.replaceChildren(svg(active ? ICON_COLLAPSE : ICON_EXPAND));
+    this.fullscreenButton.title = active ? 'Vollbild verlassen (Esc)' : 'Vollbild';
+    this.fullscreenButton.setAttribute(
+      'aria-label',
+      active ? 'Vollbild verlassen' : 'Rendering im Vollbild anzeigen',
+    );
+    this.host.classList.toggle('is-fullscreen', active);
+    this.resize();
   }
 
   setScale(scale: number): void {
@@ -187,8 +270,13 @@ export class LabSurface {
   destroy(): void {
     this.stop();
     this.resizeObserver.disconnect();
+    document.removeEventListener('fullscreenchange', this.onFullscreenChange);
+    document.removeEventListener('webkitfullscreenchange', this.onFullscreenChange);
+    if (this.pseudoFullscreen) this.exitPseudoFullscreen();
+    if (document.fullscreenElement === this.host) document.exitFullscreen().catch(() => undefined);
     const ext = this.gl.getExtension('WEBGL_lose_context');
     ext?.loseContext();
+    this.fullscreenButton.remove();
     this.canvas.remove();
     this.hud.remove();
   }

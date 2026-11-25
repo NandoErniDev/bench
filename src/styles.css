@@ -1144,6 +1144,77 @@ select {
 .lab-canvas:active {
   cursor: grabbing;
 }
+
+/* ---------- lab fullscreen ---------- */
+
+.lab-fullscreen {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 9px;
+  background: rgba(0, 0, 0, 0.42);
+  color: #fff;
+  cursor: pointer;
+  opacity: 0.78;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: opacity 0.18s var(--ease), background 0.18s var(--ease);
+}
+.lab-fullscreen:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.68);
+}
+.lab-fullscreen:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+.lab-fullscreen svg {
+  width: 17px;
+  height: 17px;
+}
+
+.lab-canvas:fullscreen,
+.lab-canvas:-webkit-full-screen {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  border: none;
+  border-radius: 0;
+  background: var(--canvas-bg);
+}
+.lab-canvas:fullscreen .lab-hud,
+.lab-canvas:-webkit-full-screen .lab-hud {
+  left: 16px;
+  bottom: 16px;
+}
+.lab-canvas:fullscreen .lab-fullscreen,
+.lab-canvas:-webkit-full-screen .lab-fullscreen {
+  top: 16px;
+  right: 16px;
+}
+
+.lab-canvas.pseudo-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 990;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  aspect-ratio: auto;
+  border: none;
+  border-radius: 0;
+  cursor: default;
+}
+
+body.lab-fullscreen-active {
+  overflow: hidden;
+}
 .lab-hud {
   position: absolute;
   left: 10px;
