@@ -353,7 +353,7 @@ export function mountMandelbrot(host: HTMLElement, controls: HTMLElement): { des
 
     if (pointers.size === 1) {
       const rect = surface.canvas.getBoundingClientRect();
-      panBy(-(event.clientX - previous.x) / rect.height, (event.clientY - previous.y) / rect.height);
+      panBy((event.clientX - previous.x) / rect.height, -(event.clientY - previous.y) / rect.height);
       return;
     }
 
@@ -365,7 +365,7 @@ export function mountMandelbrot(host: HTMLElement, controls: HTMLElement): { des
         zoomAround(midpoint.x, midpoint.y, lastPinchDistance / Math.max(1, distance));
       }
       const rect = surface.canvas.getBoundingClientRect();
-      panBy(-(midpoint.x - lastMidpoint.x) / rect.height, (midpoint.y - lastMidpoint.y) / rect.height);
+      panBy((midpoint.x - lastMidpoint.x) / rect.height, -(midpoint.y - lastMidpoint.y) / rect.height);
       lastPinchDistance = distance;
       lastMidpoint = midpoint;
     }

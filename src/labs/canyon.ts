@@ -370,7 +370,7 @@ export function mountCanyon(host: HTMLElement, controls: HTMLElement): { destroy
     pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     if (pointers.size === 1) {
       view.yawOffset = Math.max(-1.1, Math.min(1.1, view.yawOffset - (event.clientX - previous.x) * 0.005));
-      view.pitchOffset = Math.max(-0.55, Math.min(0.55, view.pitchOffset + (previous.y - event.clientY) * 0.004));
+      view.pitchOffset = Math.max(-0.55, Math.min(0.55, view.pitchOffset + (event.clientY - previous.y) * 0.004));
       return;
     }
     const [a, b] = Array.from(pointers.values());

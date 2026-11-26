@@ -306,7 +306,7 @@ export function mountPathtracer(host: HTMLElement, controls: HTMLElement): { des
       pinchDistance = distance;
       return;
     }
-    state.yaw -= (event.clientX - lastPointer.x) * 0.006;
+    state.yaw += (event.clientX - lastPointer.x) * 0.006;
     state.pitch = Math.max(-0.15, Math.min(1.2, state.pitch + (event.clientY - lastPointer.y) * 0.005));
     lastPointer = { x: event.clientX, y: event.clientY };
     reset = true;

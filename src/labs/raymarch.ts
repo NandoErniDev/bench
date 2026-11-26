@@ -195,7 +195,7 @@ export function mountRaymarch(host: HTMLElement, controls: HTMLElement): { destr
     if (!previous) return;
     pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     if (pointers.size === 1) {
-      view.yaw -= (event.clientX - previous.x) * 0.008;
+      view.yaw += (event.clientX - previous.x) * 0.008;
       view.pitch = Math.max(-1.35, Math.min(1.35, view.pitch + (event.clientY - previous.y) * 0.006));
       return;
     }

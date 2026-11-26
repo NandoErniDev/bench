@@ -306,7 +306,7 @@ export function mountBlackhole(host: HTMLElement, controls: HTMLElement): { dest
     if (!previous) return;
     pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
     if (pointers.size === 1) {
-      view.yaw -= (event.clientX - previous.x) * 0.007;
+      view.yaw += (event.clientX - previous.x) * 0.007;
       view.pitch = Math.max(-1.2, Math.min(1.2, view.pitch + (event.clientY - previous.y) * 0.005));
       return;
     }
