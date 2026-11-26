@@ -218,6 +218,38 @@ export function yieldFrame(): Promise<void> {
   });
 }
 
+/**
+ * Waits until the tab is in the foreground again. Background tabs are throttled
+ * by every browser, so measuring there would produce incomparable numbers.
+ */
+export function waitForVisible(signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (document.visibilityState === 'visible') {
+      resolve();
+      return;
+    }
+    if (signal?.aborted) {
+      reject(abortError());
+      return;
+    }
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      cleanup();
+      resolve();
+    };
+    function onAbort() {
+      cleanup();
+      reject(abortError());
+    }
+    function cleanup() {
+      document.removeEventListener('visibilitychange', onVisible);
+      signal?.removeEventListener('abort', onAbort);
+    }
+    document.addEventListener('visibilitychange', onVisible);
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
+}
+
 export function nextTick(): Promise<void> {
   return new Promise((resolve) => window.setTimeout(resolve, 0));
 }

@@ -283,24 +283,51 @@ export function mountTerrain(host: HTMLElement, controls: HTMLElement): { destro
   buildMesh();
 
   // ----------------------------------------------------------- interaction
+  const pointers = new Map<number, { x: number; y: number }>();
   let dragging = false;
   let lastX = 0;
   let lastY = 0;
+  let pinchDistance = 0;
+  const spread = () => {
+    const [a, b] = Array.from(pointers.values());
+    return a && b ? Math.hypot(a.x - b.x, a.y - b.y) : 0;
+  };
   const onPointerDown = (event: PointerEvent) => {
-    dragging = true;
+    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    dragging = pointers.size > 0;
     lastX = event.clientX;
     lastY = event.clientY;
+    pinchDistance = pointers.size === 2 ? spread() : 0;
     surface.canvas.setPointerCapture(event.pointerId);
   };
   const onPointerMove = (event: PointerEvent) => {
-    if (!dragging) return;
+    const tracked = pointers.get(event.pointerId);
+    if (!tracked) return;
+    tracked.x = event.clientX;
+    tracked.y = event.clientY;
+    // Two fingers zoom like the mouse wheel; one finger rotates.
+    if (pointers.size >= 2) {
+      const distance = spread();
+      if (pinchDistance > 0 && distance > 0) {
+        state.radius = Math.min(7, Math.max(1.8, state.radius * (pinchDistance / distance)));
+      }
+      pinchDistance = distance;
+      return;
+    }
     state.angle -= (event.clientX - lastX) * 0.006;
     state.height = Math.min(3.6, Math.max(0.6, state.height + (event.clientY - lastY) * 0.008));
     lastX = event.clientX;
     lastY = event.clientY;
   };
-  const onPointerUp = () => {
-    dragging = false;
+  const onPointerUp = (event: PointerEvent) => {
+    pointers.delete(event.pointerId);
+    if (pointers.size < 2) pinchDistance = 0;
+    dragging = pointers.size > 0;
+    const remaining = Array.from(pointers.values())[0];
+    if (remaining) {
+      lastX = remaining.x;
+      lastY = remaining.y;
+    }
   };
   const onWheel = (event: WheelEvent) => {
     event.preventDefault();
@@ -359,7 +386,7 @@ export function mountTerrain(host: HTMLElement, controls: HTMLElement): { destro
       { class: 'card' },
       el('div', { class: 'card-head' }, el('h3', null, 'Szene')),
       el('div', { class: 'stack', style: 'gap:14px' }, detailControl.node, resolutionControl.node, el('div', null, shadowToggle), el('div', null, rotateToggle)),
-      el('p', { class: 'footnote', style: 'margin-top:10px' }, 'Ziehen: Kamera drehen · Mausrad: Abstand'),
+      el('p', { class: 'footnote', style: 'margin-top:10px' }, 'Ziehen: Kamera drehen · Mausrad / Pinch: Abstand'),
     ),
     el(
       'div',

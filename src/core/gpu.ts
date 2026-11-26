@@ -8,6 +8,12 @@
  *
  * Where the browser exposes EXT_disjoint_timer_query_webgl2, GPU-only time is
  * measured as well; otherwise only wall-clock frame time is reported.
+ *
+ * Fairness: every workload uses the same sizes and the same texture formats on
+ * all platforms. In particular the simulation state is plain RGBA8 instead of
+ * an optional float render target, so no browser gets a different amount of
+ * bandwidth per texel — the work a device executes is identical on iOS,
+ * Android, macOS and Windows.
  */
 
 import {
@@ -23,7 +29,7 @@ import {
   type GpuTestScore,
   type Mode,
 } from './suite';
-import { clamp, throwIfAborted } from './util';
+import { clamp, throwIfAborted, waitForVisible } from './util';
 
 const FS_TRIANGLE = `#version 300 es
 void main() {
@@ -241,16 +247,12 @@ function uniforms(gl: WebGL2RenderingContext, program: WebGLProgram, names: stri
   return map;
 }
 
-function makeTarget(gl: WebGL2RenderingContext, width: number, height: number, depth: boolean, float: boolean): Target {
+function makeTarget(gl: WebGL2RenderingContext, width: number, height: number, depth: boolean): Target {
   const tex = gl.createTexture();
   const fb = gl.createFramebuffer();
   if (!tex || !fb) throw new Error('Render-Target konnte nicht erstellt werden');
   gl.bindTexture(gl.TEXTURE_2D, tex);
-  if (float) {
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, width, height, 0, gl.RGBA, gl.FLOAT, null);
-  } else {
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-  }
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -372,6 +374,12 @@ function lookAt(eye: [number, number, number], centre: [number, number, number],
   return out;
 }
 
+/** Software rasterisers are not hardware GPUs — their scores must be flagged. */
+function isSoftwareRenderer(renderer: string | null): boolean {
+  if (!renderer) return false;
+  return /swiftshader|llvmpipe|softpipe|software|basic render|microsoft basic|mesa offscreen/i.test(renderer);
+}
+
 function timerExtension(gl: WebGL2RenderingContext) {
   const ext = gl.getExtension('EXT_disjoint_timer_query_webgl2') as
     | (Record<string, unknown> & { TIME_ELAPSED_EXT: number })
@@ -424,6 +432,7 @@ export async function runGpuBenchmark(options: GpuRunOptions): Promise<GpuResult
   const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
   const renderer = debugInfo ? (gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) as string | null) : null;
   const vendor = debugInfo ? (gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) as string | null) : null;
+  const software = isSoftwareRenderer(renderer);
   const timerExt = timerExtension(gl);
   const pixels = new Uint8Array(4);
   const vao = gl.createVertexArray();
@@ -464,15 +473,25 @@ export async function runGpuBenchmark(options: GpuRunOptions): Promise<GpuResult
     let draws = 0;
     let elapsed = 0;
     let batch = 2;
-    const wallStart = performance.now();
+    let wallStart = performance.now();
     /** Budget is measured work, not wall time: a throttled tab cannot skew the sample count. */
-    const wallLimit = targetMs * 3;
+    const wallLimit = Math.max(targetMs * 3, 6000);
     /** Yield only after ~220 ms of measured work, so timer throttling cannot dominate. */
     let sinceYield = 0;
 
-    while (elapsed < targetMs && performance.now() - wallStart < wallLimit) {
+    // At least two samples, so very slow GPUs still produce a value instead of a
+    // single batch; hidden time never counts towards the budget.
+    while ((elapsed < targetMs || samples.length < 2) && performance.now() - wallStart < wallLimit) {
       throwIfAborted(options.signal);
       if (contextLost) throw new Error('WebGL-Kontext wurde während der Messung verloren.');
+      if (document.visibilityState === 'hidden') {
+        // Every browser throttles timers and compositing in background tabs.
+        // Waiting keeps the measurement comparable instead of silently skewing it.
+        await waitForVisible(options.signal);
+        wallStart = performance.now();
+        sinceYield = 0;
+        continue;
+      }
       const t0 = performance.now();
       for (let i = 0; i < batch; i++) draw();
       syncFrom(target);
@@ -543,7 +562,7 @@ export async function runGpuBenchmark(options: GpuRunOptions): Promise<GpuResult
     throwIfAborted(options.signal);
 
     // ---------------------------------------------------------------- shader
-    const shaderTarget = makeTarget(gl, width, height, false, false);
+    const shaderTarget = makeTarget(gl, width, height, false);
     const shaderProgram = compile(gl, FS_TRIANGLE, SHADER_TEST_FS, 'Shader-Test');
     const shaderUniforms = uniforms(gl, shaderProgram, ['uRes', 'uIters', 'uPhase']);
     let phase = 0;
@@ -590,7 +609,7 @@ export async function runGpuBenchmark(options: GpuRunOptions): Promise<GpuResult
     if (options.mode === 'full') await options.pause(timing.pauseBetweenGpuMs, 'Kurze Pause');
     throwIfAborted(options.signal);
 
-    const geoTarget = makeTarget(gl, width, height, false, false);
+    const geoTarget = makeTarget(gl, width, height, false);
     const geoProgram = compile(gl, VERTEX_TEST_VS, VERTEX_TEST_FS, 'Vertex-Test');
     const geoUniforms = uniforms(gl, geoProgram, ['uPhase']);
     const vertexCount = 262144;
@@ -648,7 +667,7 @@ export async function runGpuBenchmark(options: GpuRunOptions): Promise<GpuResult
     if (options.mode === 'full') await options.pause(timing.pauseBetweenGpuMs, 'Kurze Pause');
     throwIfAborted(options.signal);
 
-    const sceneTarget = makeTarget(gl, width, height, true, false);
+    const sceneTarget = makeTarget(gl, width, height, true);
     const sceneProgram = compile(gl, TERRAIN_VS, TERRAIN_FS, 'Szenen-Test');
     const sceneUniforms = uniforms(gl, sceneProgram, ['uProj', 'uView', 'uEye']);
     const terrain = buildTerrain(160);
@@ -724,45 +743,24 @@ export async function runGpuBenchmark(options: GpuRunOptions): Promise<GpuResult
     if (options.mode === 'full') await options.pause(timing.pauseBetweenGpuMs, 'Kurze Pause');
     throwIfAborted(options.signal);
 
-    const floatTargetsSupported = (() => {
-      if (!gl.getExtension('EXT_color_buffer_float')) return false;
-      try {
-        const probe = makeTarget(gl, 8, 8, false, true);
-        gl.deleteFramebuffer(probe.fb);
-        gl.deleteTexture(probe.tex);
-        return true;
-      } catch {
-        return false;
-      }
-    })();
-
     const simSize = 512;
     const simCount = simSize * simSize;
-    const simTargetA = makeTarget(gl, simSize, simSize, false, floatTargetsSupported);
-    const simTargetB = makeTarget(gl, simSize, simSize, false, floatTargetsSupported);
+    // RGBA8 on every platform. Float render targets depend on an optional
+    // extension and would change the bytes per texel, i.e. the workload itself.
+    const simTargetA = makeTarget(gl, simSize, simSize, false);
+    const simTargetB = makeTarget(gl, simSize, simSize, false);
 
     const initialiseSim = (target: Target) => {
       const count = simCount * 4;
       gl.bindTexture(gl.TEXTURE_2D, target.tex);
-      if (floatTargetsSupported) {
-        const data = new Float32Array(count);
-        for (let i = 0; i < simCount; i++) {
-          data[i * 4] = (i * 0.6180339887) % 1;
-          data[i * 4 + 1] = ((i * 0.7548776662) % 1 + 1) % 1;
-          data[i * 4 + 2] = 0.5;
-          data[i * 4 + 3] = 0.5;
-        }
-        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, simSize, simSize, gl.RGBA, gl.FLOAT, data);
-      } else {
-        const data = new Uint8Array(count);
-        for (let i = 0; i < simCount; i++) {
-          data[i * 4] = (i * 137) % 256;
-          data[i * 4 + 1] = (i * 71 + 13) % 256;
-          data[i * 4 + 2] = 128;
-          data[i * 4 + 3] = 128;
-        }
-        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, simSize, simSize, gl.RGBA, gl.UNSIGNED_BYTE, data);
+      const data = new Uint8Array(count);
+      for (let i = 0; i < simCount; i++) {
+        data[i * 4] = (i * 137) % 256;
+        data[i * 4 + 1] = (i * 71 + 13) % 256;
+        data[i * 4 + 2] = 128;
+        data[i * 4 + 3] = 128;
       }
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, simSize, simSize, gl.RGBA, gl.UNSIGNED_BYTE, data);
     };
     initialiseSim(simTargetA);
     initialiseSim(simTargetB);
@@ -810,7 +808,7 @@ export async function runGpuBenchmark(options: GpuRunOptions): Promise<GpuResult
       destination = swap;
     };
 
-    const simRenderTarget = makeTarget(gl, simSize, simSize, false, false);
+    const simRenderTarget = makeTarget(gl, simSize, simSize, false);
     const simMeasured = await measure(
       simRenderTarget,
       drawSim,
@@ -862,7 +860,7 @@ export async function runGpuBenchmark(options: GpuRunOptions): Promise<GpuResult
         throwIfAborted(options.signal);
         const w = Math.max(64, Math.round(width * scale));
         const h = Math.max(64, Math.round(height * scale));
-        const target = makeTarget(gl, w, h, false, false);
+        const target = makeTarget(gl, w, h, false);
         let localPhase = 0;
         const draw = () => {
           gl.bindFramebuffer(gl.FRAMEBUFFER, target.fb);
@@ -912,6 +910,7 @@ export async function runGpuBenchmark(options: GpuRunOptions): Promise<GpuResult
       api: 'webgl2',
       renderer: renderer ?? null,
       vendor: vendor ?? null,
+      software,
       timerQuery: Boolean(timerExt),
       resolution: { w: width, h: height },
       scaling,

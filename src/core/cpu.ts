@@ -2,9 +2,11 @@
  * CPU benchmark orchestration.
  *
  * Single-core: one worker runs every workload sequentially.
- * Multi-core: one worker per logical core (capped at 8) runs the same units
+ * Multi-core: one worker per logical core (capped at 16) runs the same units
  * concurrently; throughput is the summed operations divided by the longest
- * worker wall clock, so no time is double counted.
+ * worker wall clock, so no time is double counted. The cap is high enough to
+ * cover consumer CPUs with more than eight logical cores, so a 12- or 16-core
+ * machine is not measured as if it had eight.
  * Full mode additionally repeats the multi-core load to observe sustained
  * performance and thermal/scheduler throttling.
  */
@@ -24,7 +26,7 @@ import { TIMING } from './suite';
 import { WORKLOAD_INFO, type WorkloadId } from './workloads';
 import { clamp, throwIfAborted } from './util';
 
-const MAX_WORKERS = 8;
+const MAX_WORKERS = 16;
 const WORKLOAD_ORDER: WorkloadId[] = ['int', 'float', 'math', 'fft'];
 
 export interface CpuProgress {

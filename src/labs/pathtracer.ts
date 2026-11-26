@@ -275,23 +275,48 @@ export function mountPathtracer(host: HTMLElement, controls: HTMLElement): { des
     };
   };
 
+  const pointers = new Map<number, { x: number; y: number }>();
   let dragging = false;
   let lastPointer = { x: 0, y: 0 };
+  let pinchDistance = 0;
+  const spread = () => {
+    const [a, b] = Array.from(pointers.values());
+    return a && b ? Math.hypot(a.x - b.x, a.y - b.y) : 0;
+  };
 
   const onPointerDown = (event: PointerEvent) => {
-    dragging = true;
+    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    dragging = pointers.size > 0;
     lastPointer = { x: event.clientX, y: event.clientY };
+    pinchDistance = pointers.size === 2 ? spread() : 0;
     surface.canvas.setPointerCapture(event.pointerId);
   };
   const onPointerMove = (event: PointerEvent) => {
-    if (!dragging) return;
+    const tracked = pointers.get(event.pointerId);
+    if (!tracked) return;
+    tracked.x = event.clientX;
+    tracked.y = event.clientY;
+    // Two fingers zoom like the mouse wheel; one finger orbits.
+    if (pointers.size >= 2) {
+      const distance = spread();
+      if (pinchDistance > 0 && distance > 0) {
+        state.distance = Math.max(2.6, Math.min(12, state.distance * (distance / pinchDistance)));
+        reset = true;
+      }
+      pinchDistance = distance;
+      return;
+    }
     state.yaw -= (event.clientX - lastPointer.x) * 0.006;
     state.pitch = Math.max(-0.15, Math.min(1.2, state.pitch + (event.clientY - lastPointer.y) * 0.005));
     lastPointer = { x: event.clientX, y: event.clientY };
     reset = true;
   };
-  const onPointerUp = () => {
-    dragging = false;
+  const onPointerUp = (event: PointerEvent) => {
+    pointers.delete(event.pointerId);
+    if (pointers.size < 2) pinchDistance = 0;
+    dragging = pointers.size > 0;
+    const remaining = Array.from(pointers.values())[0];
+    if (remaining) lastPointer = { ...remaining };
   };
   const onWheel = (event: WheelEvent) => {
     event.preventDefault();

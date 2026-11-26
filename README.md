@@ -55,6 +55,11 @@ keine gerätespezifischen Erwartungswerte und keine Anpassung an ein Zielergebni
 Alle GPU-Lasten rendern in ein **festes 1280 × 720-Framebuffer**. Displayauflösung und Seitenverhältnis
 des Geräts beeinflussen den Score damit nicht.
 
+Alle Plattformen führen dieselbe Arbeit aus: gleiche Shader, gleiche Dreiecks- und Partikelzahlen, gleiche
+Texturformate. Der Simulationszustand liegt überall als RGBA8 vor — es gibt keinen Float-Pfad für Browser
+mit `EXT_color_buffer_float`, weil unterschiedliche Bytes pro Texel eine andere Arbeitslast wären. Es gibt
+keinen Code, der nach Betriebssystem, Browser oder Geräteklasse anders rechnet oder gewichtet.
+
 ---
 
 ## Messmethodik
@@ -66,7 +71,7 @@ Worker die Batch-Größe so, dass ein Batch auf dem jeweiligen Gerät etwa 24–
 schnellen wie langsamen Geräten dieselbe Art von Arbeit gemessen, ohne dass Overhead pro Batch dominiert.
 
 - **Single-Core:** ein Worker führt alle Lasten nacheinander aus.
-- **Multi-Core:** ein Worker pro logischem Kern (maximal acht) führt dieselben Batches gleichzeitig aus.
+- **Multi-Core:** ein Worker pro logischem Kern (maximal 16) führt dieselben Batches gleichzeitig aus.
   Der aggregierte Durchsatz ist die Summe aller Operationen geteilt durch die längste gemessene
   Worker-Laufzeit – es wird keine Zeit doppelt gezählt.
 - **Dauerlast (nur Full Test):** die Multi-Core-Last wird mehrfach mit Abkühlpausen wiederholt.
@@ -307,6 +312,10 @@ CNAME-Eintrag.
 | Firefox 115+ | ✅ | ✅ WebGL2 | ✅ |
 
 - WebGL2 ist Voraussetzung für den GPU-Test; fehlt es, bleiben GPU- und Overall-Score leer.
+- Läuft WebGL auf einem Software-Rasterizer (z. B. SwiftShader ohne GPU), steht das im Ergebnis — der
+  Wert beschreibt dann keine Grafikhardware.
+- Messungen starten nur bei sichtbarem Tab; wird er verdeckt, pausiert der GPU-Test und das Ergebnis wird
+  als nicht repräsentativ gekennzeichnet.
 - WebGPU wird optional erkannt und als Zusatzmessung ausgewiesen – es fließt bewusst nicht in den
   GPU-Score ein, damit WebGL2- und WebGPU-Ergebnisse vergleichbar bleiben.
 - Ohne Web Worker ist kein CPU-Test möglich; dieser Fall wird gemeldet statt einen Wert zu schätzen.

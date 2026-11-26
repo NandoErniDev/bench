@@ -19,7 +19,7 @@ import {
   type Mode,
   type RunResult,
 } from './suite';
-import { throwIfAborted, uid } from './util';
+import { throwIfAborted, uid, waitForVisible } from './util';
 
 export interface StageState {
   id: string;
@@ -76,6 +76,19 @@ export function computeEfficiency(cpu: CpuResult): EfficiencyResult {
 }
 
 export async function runBenchmark(options: RunOptions): Promise<RunResult> {
+  let hiddenSeen = false;
+  const onVisibility = () => {
+    if (document.visibilityState === 'hidden') hiddenSeen = true;
+  };
+  document.addEventListener('visibilitychange', onVisibility);
+  try {
+    return await executeRun(options, () => hiddenSeen);
+  } finally {
+    document.removeEventListener('visibilitychange', onVisibility);
+  }
+}
+
+async function executeRun(options: RunOptions, wasHidden: () => boolean): Promise<RunResult> {
   const started = performance.now();
   const { mode, signal } = options;
   const timing = TIMING[mode];
@@ -89,6 +102,9 @@ export async function runBenchmark(options: RunOptions): Promise<RunResult> {
   });
   const device = await detectDevice();
   throwIfAborted(signal);
+  // Measurements only start while the tab is visible: background throttling
+  // would change the numbers for reasons that have nothing to do with the device.
+  await waitForVisible(signal);
 
   options.onStage({
     id: 'cpu',
@@ -121,6 +137,7 @@ export async function runBenchmark(options: RunOptions): Promise<RunResult> {
     'Abkühlpause vor dem GPU-Test — das Gerät soll nicht unnötig heiß werden',
   );
   throwIfAborted(signal);
+  await waitForVisible(signal);
 
   let gpu: GpuResult | null = null;
   if (!options.gpuHost) {
@@ -178,6 +195,19 @@ export async function runBenchmark(options: RunOptions): Promise<RunResult> {
       );
     }
     notes.push('WebGL2 bei fixer interner Auflösung 1280 × 720 gemessen, unabhängig von der Displayauflösung.');
+    if (gpu.software) {
+      notes.push(
+        `Software-Rasterizer statt Hardware-GPU erkannt (${gpu.renderer ?? 'Renderer unbekannt'}). Der GPU-Score beschreibt hier keine Grafikhardware und ist nicht mit echten GPUs vergleichbar.`,
+      );
+    }
+  }
+  notes.push(
+    `CPU-Multi-Core mit ${cpu.workersUsed} Workern gemessen; der Browser meldet ${device.cores ?? 'keine'} logische Kerne.`,
+  );
+  if (wasHidden()) {
+    notes.push(
+      'Der Tab war während der Messung im Hintergrund. Browser drosseln Timer, Worker und Grafik — dieses Ergebnis ist nicht repräsentativ.',
+    );
   }
   if (!cpu.sustained) {
     notes.push('Quick Test: keine Dauerlast-Messung, daher keine Stabilitäts- und Effizienz-Proxy-Werte.');

@@ -95,6 +95,38 @@ export function methodView(): View {
       'div',
       { class: 'section' },
       card([
+        cardHead('Fairness über Plattformen', tag('measured', 'gleiche Arbeit überall')),
+        el(
+          'p',
+          { class: 'small muted', style: 'line-height:1.65' },
+          'BENCH hat keinen Plattform-Pfad: Es gibt keinen Code, der je nach Betriebssystem, Browser oder Geräteklasse andere Arbeit ausführt, anders gewichtet oder einen Bonus vergibt. '
+            + 'iOS, iPadOS, Android, macOS und Windows durchlaufen exakt dieselben Arbeitslasten mit denselben Seeds, Größen und Shadern.',
+        ),
+        el(
+          'ul',
+          { class: 'stack', style: 'gap:9px;padding-left:18px;margin:12px 0 0' },
+          ...[
+            'GPU: feste interne Auflösung 1280 × 720, identische Shader, 262 144 Punkte, ~77 k Dreiecke, 262 144 Partikel — unabhängig von Display, Pixeldichte und Seitenverhältnis.',
+            'GPU: Der Simulationszustand liegt auf jedem Browser als RGBA8 vor. Es gibt keinen Float-Pfad für Browser mit EXT_color_buffer_float, denn unterschiedliche Bytes pro Texel wären eine andere Arbeitslast.',
+            'CPU: gleicher Code und gleiche Seeds; kalibriert wird nur die Batch-Größe an die Gerätegeschwindigkeit, nicht die Art der Arbeit.',
+            'CPU: ein Worker pro vom Browser gemeldeten logischen Kern, maximal 16. Damit werden auch Geräte mit mehr als acht Kernen vollständig gemessen; die tatsächlich verwendete Zahl steht in jedem Ergebnis.',
+            'Kein Referenzgerät, keine Gewichtung nach User-Agent, keine erwarteten Hardwarewerte. WebGPU wird nur zusätzlich geprüft und fließt nicht in den Score ein.',
+            'Messungen starten nur bei sichtbarem Tab; wird er währenddessen verdeckt, pausiert der GPU-Test und das Ergebnis wird entsprechend gekennzeichnet.',
+          ].map((entry) => el('li', { class: 'small muted', style: 'line-height:1.6' }, entry)),
+        ),
+        el(
+          'p',
+          { class: 'footnote', style: 'margin-top:12px;line-height:1.6' },
+          'Was sich nicht angleichen lässt und deshalb im Ergebnis steht: Treiber- und Browser-Implementierungen (ANGLE, Metal, Vulkan), die Engine-Ausführung von Math.sin/cos, die Wahl zwischen integrierter und diskreter GPU, Software-Rasterizer sowie thermische Drosselung. '
+            + 'Innerhalb derselben Suite-Version sind Scores deshalb vergleichbar, aber kein Laborvergleich.',
+        ),
+      ]),
+    ),
+
+    el(
+      'div',
+      { class: 'section' },
+      card([
         cardHead('CPU-Messung', tag('measured', 'Web Worker')),
         el(
           'div',
@@ -108,7 +140,7 @@ export function methodView(): View {
           el(
             'p',
             { class: 'small muted', style: 'line-height:1.65' },
-            'Single-Core: ein Worker führt alle Lasten nacheinander aus. Multi-Core: ein Worker pro logischem Kern (maximal acht) führt dieselben Batches gleichzeitig aus. '
+            'Single-Core: ein Worker führt alle Lasten nacheinander aus. Multi-Core: ein Worker pro logischem Kern (maximal 16) führt dieselben Batches gleichzeitig aus. '
               + 'Der aggregierte Durchsatz ist die Summe aller Operationen geteilt durch die längste gemessene Worker-Laufzeit — es wird keine Zeit doppelt gezählt. '
               + 'Der Full Test wiederholt die Multi-Core-Last mehrfach mit Abkühlpausen und vergleicht den letzten mit dem besten Durchlauf.',
           ),
@@ -138,7 +170,8 @@ export function methodView(): View {
           { class: 'small muted', style: 'line-height:1.65' },
           'Alle vier Grafiklasten rendern in ein Framebuffer mit fester interner Auflösung von 1280 × 720. Die Displayauflösung und das Seitenverhältnis des Geräts beeinflussen den Score daher nicht. '
             + 'Nach jedem Batch wird ein Pixel mit readPixels gelesen. Das blockiert, bis die GPU die Arbeit abgeschlossen hat — gemessen wird also fertige Arbeit, nicht nur das Absenden von Befehlen. '
-            + 'Die Bildwiederholrate des Displays begrenzt die Messung nicht, weil nicht im requestAnimationFrame-Takt gezeichnet wird.',
+            + 'Die Bildwiederholrate des Displays begrenzt die Messung nicht, weil nicht im requestAnimationFrame-Takt gezeichnet wird. '
+            + 'Shader, Geometrie, Texturformate und Partikelanzahl sind auf allen Plattformen identisch — der Simulationszustand liegt überall als RGBA8 vor, damit keine optionalen Float-Erweiterungen die Arbeit verändern.',
         ),
         el(
           'p',
@@ -221,6 +254,8 @@ export function methodView(): View {
             'Thermische Drosselung ist geräteabhängig und wird nur indirekt über den Leistungsabfall unter Dauerlast sichtbar.',
             'JIT-Warmlauf, Garbage Collection und Betriebssystem-Scheduling erzeugen Streuung. BENCH misst mehrere Batches und verwendet die Gesamtzeit, nicht einzelne Ausreißer.',
             'Grafiktreiber und Browser-Implementierungen unterscheiden sich. Ein Vergleich über Browser hinweg ist möglich, aber kein Laborvergleich.',
+            'Die JavaScript-Engines führen Math.sin, Math.cos und Math.sqrt unterschiedlich aus. Der Gleitkomma-Teil kann deshalb auf identischer Hardware zwischen Safari und Chrome abweichen.',
+            'Welche GPU ein Browser verwendet (integriert oder diskret), entscheidet der Browser; powerPreference ist nur ein Hinweis. Läuft WebGL auf einem Software-Rasterizer, wird das im Ergebnis vermerkt.',
             'Ein Score ist kein Qualitätsurteil über ein Gerät, sondern ein Durchsatzmaß für diese konkreten Arbeitslasten.',
           ].map((entry) => el('li', { class: 'small muted', style: 'line-height:1.6' }, entry)),
         ),

@@ -13,9 +13,9 @@ export type GpuTestId = 'fragment' | 'geometry' | 'scene' | 'sim';
 
 export const SUITE = {
   name: 'BENCH',
-  version: '1.0.0',
-  cpuVersion: 'c1',
-  gpuVersion: 'g1',
+  version: '1.1.0',
+  cpuVersion: 'c2',
+  gpuVersion: 'g2',
   normalization: 'Basis 1 (definierte Kalibrierungskonstanten)',
 } as const;
 
@@ -111,7 +111,7 @@ export const GPU_TEST_INFO: Record<GpuTestId, { label: string; detail: string; u
   },
   sim: {
     label: 'GPGPU-Partikelsimulation',
-    detail: '262 144 Partikel, Ping-Pong-Render-Targets, Integrationsschritte',
+    detail: '262 144 Partikel, Ping-Pong-Zustand (RGBA8), Integrationsschritte',
     unit: 'Mstep/s',
   },
 };
@@ -172,6 +172,8 @@ export interface GpuResult {
   api: 'webgl2';
   renderer: string | null;
   vendor: string | null;
+  /** True when WebGL runs on a software rasteriser instead of a real GPU. */
+  software: boolean;
   timerQuery: boolean;
   resolution: { w: number; h: number };
   scaling: Array<{ scale: number; value: number }>;
